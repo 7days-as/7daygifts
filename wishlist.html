@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wish List · 7 Day Gifts</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- SEO -->
+  <meta name="description" content="Save your favorite gifts and keep your seven-day wedding gift plan organized." />
+  <meta name="keywords" content="wishlist, gifts for wife, gifts for groom, seven days of gifts" />
+  <link rel="canonical" href="https://7daygifts.com/wishlist.html" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="page" id="wishlist-page">
+
+    <!-- HEADER -->
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="index.html" class="logo-wrap" aria-label="Home">
+          <img src="logo.png" class="logo-img" alt="7 Day Gifts logo" />
+          <span class="logo-text">7 Day Gifts</span>
+        </a>
+
+        <nav class="main-nav">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="gift-gallery.html" class="nav-link">Gift Gallery</a>
+          <a href="wishlist.html" class="nav-link active">Wish List</a>
+        </nav>
+
+        <div class="header-actions">
+          <button id="authButton" class="btn-pill btn-primary desktop-only">Sign In</button>
+          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Menu">☰</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MOBILE MENU -->
+    <div id="mobileMenu" class="mobile-menu">
+      <a href="index.html">Home</a>
+      <a href="gift-gallery.html">Gift Gallery</a>
+      <a href="wishlist.html">Wish List</a>
+      <button id="mobileAuthButton" class="mobile-auth">Sign In</button>
+    </div>
+
+    <!-- MAIN -->
+    <main class="main-content">
+      <section class="section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Wish List</h2>
+            <p class="section-subtitle" id="wishlistSubtitle">Sign in to view and save your wishlist.</p>
+          </div>
+        </div>
+
+        <div id="wishlistSignedOut" class="wishlist-note">
+          <p>You’re not signed in yet. Click <strong>Sign In</strong> to save and view items.</p>
+        </div>
+
+        <div id="wishlistSignedIn" class="hidden">
+          <p class="wishlist-note">Signed in as: <strong id="signedInEmail"></strong></p>
+          <div class="product-grid" id="wishlist-products"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <span>© 2025 7DayGifts.com</span>
+        <span>Phone: <a href="tel:14753294438">475-329-4438</a></span>
+        <span>Email: <a href="mailto:info@7daygifts.com">info@7daygifts.com</a></span>
+      </div>
+      <div class="footer-disclosure">
+        When you buy through our links, we may earn a small commission.
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SIGN IN MODAL -->
+  <div id="authBackdrop" class="modal-backdrop hidden"></div>
+  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 class="modal-title" id="modalTitle">Sign In</h3>
+      <button id="authModalClose" class="modal-x" aria-label="Close">×</button>
+    </div>
+
+    <form id="authForm" class="modal-body">
+      <label class="field">
+        <span>Email</span>
+        <input id="authEmail" type="email" placeholder="you@example.com" required />
+      </label>
+
+      <label class="checkline">
+        <input id="authAgree" type="checkbox" required />
+        <span>I agree to the Terms &amp; Conditions</span>
+      </label>
+
+      <p class="terms-link">
+        <a href="terms.html" target="_blank" rel="noopener">View Terms &amp; Conditions</a>
+      </p>
+
+      <button type="submit" class="btn-pill btn-primary modal-submit">Continue</button>
+      <p class="modal-fine">We’ll store your email locally on this device for your wishlist.</p>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
