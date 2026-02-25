@@ -3,16 +3,6 @@ const AUTH_EMAIL_KEY = "userEmail";
 const WISHLIST_KEY = "7DG_WISHLIST";
 const API_BASE = ""; // future API (blank = use mock)
 
-// ========= MOCK PRODUCTS =========
-const MOCK_PRODUCTS = [
-  { id:"gift1", title:"Luxury Throw Blanket",        category:"Home",         gender:"her", price:89,  image:"https://picsum.photos/600/420?1", url:"#", popularity:98, addedAt: 1 },
-  { id:"gift2", title:"Personalized Jewelry Tray",   category:"Personalized", gender:"her", price:45,  image:"https://picsum.photos/600/420?2", url:"#", popularity:92, addedAt: 2 },
-  { id:"gift3", title:"Leather Wallet (Classic)",    category:"Accessories",  gender:"him", price:70,  image:"https://picsum.photos/600/420?3", url:"#", popularity:88, addedAt: 3 },
-  { id:"gift4", title:"Premium Cologne Sampler",     category:"Grooming",     gender:"him", price:120, image:"https://picsum.photos/600/420?4", url:"#", popularity:85, addedAt: 4 },
-  { id:"gift5", title:"Shabbat Candlestick Set",     category:"Judaica",      gender:"her", price:150, image:"https://picsum.photos/600/420?5", url:"#", popularity:80, addedAt: 5 },
-  { id:"gift6", title:"Couple Memory Book",          category:"Experiences",  gender:"all", price:35,  image:"https://picsum.photos/600/420?6", url:"#", popularity:78, addedAt: 6 },
-  { id:"gift7", title:"Weekend Getaway Fund Jar",    category:"Experiences",  gender:"all", price:55,  image:"https://picsum.photos/600/420?7", url:"#", popularity:74, addedAt: 7 }
-];
 
 // ========= HELPERS =========
 const $ = (id) => document.getElementById(id);
@@ -109,18 +99,46 @@ function initMenu(){
 }
 
 // ========= PRODUCTS =========
-async function loadProducts(){
-  if (!API_BASE) return MOCK_PRODUCTS;
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIP3mbNKwA1vi20Aufe7uKOBp-9HYV1kIot6FNnbZyPG7IT9xazlOqA9jii5b9lLuJBO6ydMNiyzSi/pub?gid=0&single=true&output=csv";
 
+async function loadProducts(){
   try {
-    const res = await fetch(`${API_BASE}/api/products`);
-    const data = await res.json();
-    return data.items || [];
-  } catch {
-    return MOCK_PRODUCTS;
+    const response = await fetch(SHEET_URL);
+    const csvText = await response.text();
+
+    const rows = csvText.split("\n").map(r => r.split(","));
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+
+    const products = dataRows.map(row => {
+      const obj = {};
+      headers.forEach((header, i) => {
+        obj[header.trim()] = row[i];
+      });
+
+      return {
+        id: obj.product_id || obj.amazon_asin,
+        title: obj.site_title,
+        price: Number(obj.price) || 0,
+        image: obj.photo_url,
+        url: `https://www.amazon.com/dp/${obj.amazon_asin}?tag=7daygifts-20`,
+        category: obj.categories,
+        gender: obj.who_is_it_for || "all",
+        popularity: Number(obj.click_count) || 0,
+        addedAt: Date.now(),
+        status: obj.status
+      };
+    });
+
+    return products.filter(p =>
+      p.status && p.status.trim().toLowerCase() === "active"
+    );
+
+  } catch (err) {
+    console.error("Error loading sheet:", err);
+    return [];
   }
 }
-
 // ========= UI: Product Cards =========
 function renderProductCard(p){
   return `
