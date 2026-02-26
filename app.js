@@ -142,19 +142,30 @@ async function loadProducts(){
 // ========= UI: Product Cards =========
 function renderProductCard(p){
   return `
-    <article class="product-card">
+    <article class="product-card" data-url="${p.url}">
       <button class="heart ${isSaved(p.id) ? "active" : ""}" data-id="${p.id}" aria-label="Save">♥</button>
       <img src="${p.image}" alt="${p.title}">
       <h3>${p.title}</h3>
       <div class="product-price">${p.price ? `$${p.price}` : ""}</div>
-      <a class="btn-pill btn-primary" href="${p.url}" target="_blank" rel="noopener">View</a>
     </article>
   `;
 }
 
 function wireHeartButtons(container, products){
+
+  // Card click
+  container.querySelectorAll(".product-card").forEach(card => {
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".heart")) return; // don't trigger if heart clicked
+      const url = card.dataset.url;
+      if (url) window.open(url, "_blank");
+    });
+  });
+
+  // Heart buttons
   container.querySelectorAll(".heart").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
       const id = btn.dataset.id;
       const item = products.find(p => p.id === id);
       if (!item) return;
