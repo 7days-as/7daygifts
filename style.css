@@ -225,15 +225,41 @@ a{ color: inherit; text-decoration:none; }
 /* If burger uses SVG, ensure it inherits currentColor */
 .menu-toggle svg{ fill: currentColor; stroke: currentColor; }
 
-/* ---------- Mobile menu dropdown ---------- */
-.mobile-menu{
-  display:none;
-  background: var(--card);
-  border-bottom:1px solid var(--border);
-  padding:12px 16px;
-}
-.mobile-menu.open{ display:block; }
+/* ---------- Mobile menu drawer ---------- */
 
+.mobile-menu{
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 80%;
+  max-width: 320px;
+  height: 100vh;
+
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  padding: 80px 20px 20px;
+
+  box-shadow: -10px 0 30px rgba(0,0,0,0.08);
+  z-index: 9999;
+
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.mobile-menu.open{
+  transform: translateX(0);
+}
+
+/* Optional: dark overlay behind menu */
+.mobile-menu::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: -1;
+}
+
+/* Links + buttons */
 .mobile-menu a,
 .mobile-menu button{
   width:100%;
@@ -249,7 +275,8 @@ a{ color: inherit; text-decoration:none; }
   text-decoration:none;
   color:var(--text);
 }
-/* ✅ Only show hover styles on real hover devices (desktop/mouse) */
+
+/* Desktop hover only */
 @media (hover: hover) and (pointer: fine) {
   .mobile-menu a:hover,
   .mobile-menu button:hover{
@@ -257,20 +284,20 @@ a{ color: inherit; text-decoration:none; }
   }
 }
 
-/* ✅ Touch devices (iPad/iPhone): prevent “stuck hover” */
+/* Prevent stuck hover on touch */
 @media (hover: none) and (pointer: coarse) {
   .mobile-menu a:hover,
   .mobile-menu button:hover{
     background: transparent !important;
   }
 }
+
 .mobile-menu .mobile-auth{
   background: var(--primary);
   color:#fff;
   text-align:center;
   border:1px solid color-mix(in srgb, var(--maroon), #000 10%);
 }
-
 /* ================================
    HERO — Watermark INSIDE the bordered card
    ================================ */
