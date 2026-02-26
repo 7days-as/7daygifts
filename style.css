@@ -1103,3 +1103,18 @@ button#menuToggle.menu-toggle:focus-visible,
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
 }
+/* Header layout cleanup */
+.site-header {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo text */
+.site-title {
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: clamp(20px, 5vw, 36px);
+  line-height: 1;
+}
