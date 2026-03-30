@@ -568,17 +568,20 @@ a{
 .product-grid{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:16px;
+  gap:20px;
 }
 
 .product-card{
   position:relative;
+  display:flex;
+  flex-direction:column;
   background:linear-gradient(180deg,#fff,#F7F8FB);
   border:1px solid var(--border);
   border-radius:var(--radius);
-  padding:12px;
+  padding:14px;
   box-shadow:var(--shadow-soft);
-  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+  overflow:hidden;
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 
 .product-card:hover{
@@ -587,6 +590,7 @@ a{
   border-color:#BFC7D2;
 }
 
+/* square image area */
 .product-image-wrap{
   position:relative;
   width:100%;
@@ -595,35 +599,77 @@ a{
   overflow:hidden;
   background:#fff;
   border:1px solid rgba(0,0,0,0.06);
+  margin-bottom:14px;
 }
 
-.product-image-wrap.has-bg-fill{
-  background-size:cover;
-  background-position:center;
-  background-repeat:no-repeat;
-}
-
-.product-card img,
-.product-image{
+/* image always centered and fully visible */
+.product-image,
+.product-card img{
   width:100%;
   height:100%;
+  display:block;
   object-fit:contain;
   object-position:center;
   background:#fff;
 }
 
+/* text area */
+.product-card-body{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:88px;
+}
+
 .product-title{
-  margin:12px 0 6px;
+  margin:0;
   font-size:16px;
+  line-height:1.35;
+  font-weight:800;
   color:var(--text);
 }
 
 .product-price{
+  margin:0;
   font-weight:900;
-  margin-bottom:6px;
   color:var(--text);
 }
 
+/* heart */
+.heart{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:38px;
+  height:38px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#fff;
+  font-size:18px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--text);
+  z-index:3;
+}
+
+.heart.active{
+  color:var(--secondary);
+  border-color:var(--secondary);
+}
+
+@media (max-width: 980px){
+  .product-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 620px){
+  .product-grid{
+    grid-template-columns:1fr;
+  }
+}
 /* ---------- Wishlist heart ---------- */
 .heart{
   position:absolute;
