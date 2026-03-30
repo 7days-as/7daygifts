@@ -5,9 +5,14 @@
   <title>7 Day Gifts · Seven Days. Endless Meaning.</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- SEO -->
-  <meta name="description" content="Elegant, meaningful gifts for the seven days before your wedding. Curated gift ideas for Jewish couples: gifts for your wife, fiancé, or groom." />
-  <meta name="keywords" content="seven days of gifts, 7 day gifts, gifts for wife, gifts for fiance, gifts for groom, wedding countdown gifts, jewish wedding gifts" />
+  <meta
+    name="description"
+    content="Elegant, meaningful gifts for the seven days before your wedding. Curated gift ideas for Jewish couples: gifts for your wife, fiancé, or groom."
+  />
+  <meta
+    name="keywords"
+    content="seven days of gifts, 7 day gifts, gifts for wife, gifts for fiance, gifts for groom, wedding countdown gifts, jewish wedding gifts"
+  />
   <link rel="canonical" href="https://7daygifts.com/" />
 
   <link rel="stylesheet" href="style.css" />
@@ -24,7 +29,7 @@
           <span class="logo-text">7 Day Gifts</span>
         </a>
 
-        <nav class="main-nav">
+        <nav class="main-nav" aria-label="Primary">
           <a href="index.html" class="nav-link active">Home</a>
           <a href="gift-gallery.html" class="nav-link">Gift Gallery</a>
           <a href="wishlist.html" class="nav-link">Wish List</a>
@@ -32,18 +37,23 @@
 
         <div class="header-actions">
           <button id="authButton" class="btn-pill btn-primary desktop-only">Sign In</button>
-          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Menu">☰</button>
+          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Open menu">☰</button>
         </div>
       </div>
     </header>
 
+    <!-- TOP DISCLOSURE -->
+    <div class="affiliate-topbar">
+      As an Amazon Associate and affiliate partner, we may earn from qualifying purchases.
+    </div>
+
     <!-- MOBILE MENU -->
-    <div id="mobileMenu" class="mobile-menu">
+    <aside id="mobileMenu" class="mobile-menu" aria-label="Mobile menu">
       <a href="index.html">Home</a>
       <a href="gift-gallery.html">Gift Gallery</a>
       <a href="wishlist.html">Wish List</a>
       <button id="mobileAuthButton" class="mobile-auth">Sign In</button>
-    </div>
+    </aside>
 
     <!-- MAIN -->
     <main class="main-content">
@@ -51,14 +61,13 @@
       <!-- HERO -->
       <section class="section hero">
         <div class="hero-card">
-
           <h1 class="hero-title">
             Thoughtful 7-day wedding gift ideas for the meaningful days leading up to a wedding — and beyond.
           </h1>
 
           <p class="hero-subtitle">
-            Feeling overwhelmed trying to plan seven meaningful gifts?
-            You’re not alone. Finding seven thoughtful gifts can feel stressful during an already busy time.
+            Feeling overwhelmed trying to plan seven meaningful gifts? You’re not alone.
+            Finding seven thoughtful gifts can feel stressful during an already busy time.
             Browse our curated collections to make each day feel intentional — without overthinking it.
           </p>
 
@@ -66,7 +75,6 @@
             <a class="btn-pill btn-primary" href="gift-gallery.html">Browse Gifts</a>
             <a class="btn-pill btn-ghost" href="wishlist.html">View Wish List</a>
           </div>
-
         </div>
       </section>
 
@@ -75,11 +83,12 @@
         <div class="section-header">
           <div>
             <h2 class="section-title">Trending: 7 Most Popular</h2>
-            <p class="section-subtitle">Gifts chosen most often for the week before the wedding.</p>
+            <p class="section-subtitle">
+              Gifts chosen most often for the week before the wedding.
+            </p>
           </div>
         </div>
 
-        <!-- IMPORTANT: app.js expects this id -->
         <div class="product-grid" id="home-trending"></div>
       </section>
 
@@ -88,8 +97,9 @@
         <div class="callout">
           <h3>Our Mission</h3>
           <p>
-            7 Day Gifts exists to make the seven days before your wedding feel intentional, meaningful, and joyful.
-            Our gift ideas help couples add thoughtfulness and connection during the most special week of their lives.
+            7 Day Gifts exists to make the seven days before your wedding feel intentional,
+            meaningful, and joyful. Our gift ideas help couples add thoughtfulness and
+            connection during the most special week of their lives.
           </p>
         </div>
       </section>
@@ -107,13 +117,18 @@
         When you buy through our links, we may earn a small commission.
       </div>
     </footer>
-
   </div>
 
-  <!-- SIGN IN MODAL (shared across pages) -->
+  <!-- SIGN IN MODAL -->
   <div id="authBackdrop" class="modal-backdrop hidden"></div>
 
-  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div
+    id="authModal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalTitle"
+  >
     <div class="modal-head">
       <h3 class="modal-title" id="modalTitle">Sign In</h3>
       <button id="authModalClose" class="modal-x" aria-label="Close">×</button>
@@ -135,7 +150,9 @@
       </p>
 
       <button type="submit" class="btn-pill btn-primary modal-submit">Continue</button>
-      <p class="modal-fine">We’ll store your email locally on this device for your wishlist.</p>
+      <p class="modal-fine">
+        We’ll store your email locally on this device for your wishlist.
+      </p>
     </form>
   </div>
 
