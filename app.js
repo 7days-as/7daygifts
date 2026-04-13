@@ -17,19 +17,25 @@ function safeParse(value, fallback) {
 
 function escapeHtml(value) {
   return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function normalizeGender(value) {
   const v = String(value || "").trim().toLowerCase();
 
   if (["him", "for him", "male", "man", "men", "groom"].includes(v)) return "him";
-  if (["her", "for her", "female", "woman", "women", "bride", "wife", "fiancee"].includes(v)) return "her";
+  if (["her", "for her", "female", "woman", "women", "bride", "wife", "fiancee", "fiancé", "fiance"].includes(v)) return "her";
   return "all";
+}
+
+function formatPrice(price) {
+  const n = Number(price);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  return `$${n}`;
 }
 
 function parseCSVLine(line) {
@@ -37,13 +43,13 @@ function parseCSVLine(line) {
   let current = "";
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i += 1) {
+  for (let i = 0; i < line.length; i++) {
     const char = line[i];
     const next = line[i + 1];
 
     if (char === '"' && inQuotes && next === '"') {
       current += '"';
-      i += 1;
+      i++;
       continue;
     }
 
@@ -65,12 +71,6 @@ function parseCSVLine(line) {
   return result.map((item) => item.trim());
 }
 
-function formatPrice(price) {
-  const n = Number(price);
-  if (!Number.isFinite(n) || n <= 0) return "";
-  return `$${n}`;
-}
-
 // ========= AUTH =========
 function getUserEmail() {
   return localStorage.getItem(AUTH_EMAIL_KEY) || "";
@@ -83,9 +83,8 @@ function isSignedIn() {
 function updateAuthUI() {
   const authButton = $("authButton");
   const mobileAuthButton = $("mobileAuthButton");
-  const email = getUserEmail();
 
-  if (email) {
+  if (isSignedIn()) {
     if (authButton) authButton.textContent = "Sign Out";
     if (mobileAuthButton) mobileAuthButton.textContent = "Sign Out";
   } else {
@@ -112,9 +111,7 @@ function handleAuthClick() {
   if (isSignedIn()) {
     localStorage.removeItem(AUTH_EMAIL_KEY);
     updateAuthUI();
-    renderWishlistPage(window.__products || []);
-    renderHomeTrending(window.__products || []);
-    renderGalleryPage(window.__products || []);
+    refreshAllUI();
     closeMobileMenu();
     return;
   }
@@ -125,7 +122,13 @@ function handleAuthClick() {
 
 // ========= WISHLIST =========
 function getWishlistMap() {
-  return safeParse(localStorage.getItem(WISHLIST_KEY), {});
+  const raw = safeParse(localStorage.getItem(WISHLIST_KEY), {});
+  if (Array.isArray(raw)) {
+    // old format fallback
+    const email = getUserEmail();
+    return email ? { [email]: raw } : {};
+  }
+  return raw;
 }
 
 function saveWishlistMap(map) {
@@ -149,23 +152,23 @@ function setWishlist(list) {
   saveWishlistMap(map);
 }
 
-function isSaved(id) {
-  return getWishlist().some((item) => item.id === id);
+function isSaved(productId) {
+  return getWishlist().some((item) => item.id === productId);
 }
 
-function toggleWishlist(item) {
+function toggleWishlist(product) {
   if (!isSignedIn()) {
     openModal();
     return false;
   }
 
   const list = getWishlist();
-  const index = list.findIndex((x) => x.id === item.id);
+  const index = list.findIndex((item) => item.id === product.id);
 
   if (index >= 0) {
     list.splice(index, 1);
   } else {
-    list.push(item);
+    list.push(product);
   }
 
   setWishlist(list);
@@ -206,57 +209,56 @@ async function loadProducts() {
     const headers = parseCSVLine(lines[0]);
     const rows = lines.slice(1).map(parseCSVLine);
 
-    const products = rows
+    return rows
       .map((row, index) => {
         const obj = {};
         headers.forEach((header, i) => {
-          obj[String(header).trim()] = row[i] ?? "";
+          obj[header.trim()] = row[i] ?? "";
         });
 
-        const asin = obj.amazon_asin?.trim();
-        const id = obj.product_id?.trim() || asin || `product-${index + 1}`;
+        const asin = String(obj.amazon_asin || "").trim();
+        const id = String(obj.product_id || "").trim() || asin || `product-${index + 1}`;
 
         return {
           id,
           asin,
-          title: obj.site_title?.trim() || "Untitled product",
+          title: String(obj.site_title || "Untitled product").trim(),
           price: Number(obj.price) || 0,
-          image: obj.photo_url?.trim() || "",
+          image: String(obj.photo_url || "").trim(),
           url: asin ? `https://www.amazon.com/dp/${asin}?tag=7daygifts-20` : "#",
-          category: obj.categories?.trim() || "",
+          category: String(obj.categories || "").trim(),
           gender: normalizeGender(obj.who_is_it_for),
           popularity: Number(obj.click_count) || 0,
           addedAt:
-            obj.added_at?.trim() ||
-            obj.created_at?.trim() ||
-            obj.date_added?.trim() ||
+            String(obj.added_at || "").trim() ||
+            String(obj.created_at || "").trim() ||
+            String(obj.date_added || "").trim() ||
             `2026-01-${String((index % 28) + 1).padStart(2, "0")}`,
-          status: obj.status?.trim() || ""
+          status: String(obj.status || "").trim().toLowerCase()
         };
       })
-      .filter((product) => product.status.toLowerCase() === "active");
-
-    return products;
+      .filter((product) => product.status === "active");
   } catch (error) {
-    console.error("Error loading sheet:", error);
+    console.error("Error loading products:", error);
     return [];
   }
 }
 
-// ========= UI: PRODUCT CARDS =========
+// ========= PRODUCT CARDS =========
 function renderProductCard(product) {
   const title = escapeHtml(product.title);
   const image = escapeHtml(product.image);
   const url = escapeHtml(product.url);
+  const id = escapeHtml(product.id);
   const price = formatPrice(product.price);
 
   return `
-    <article class="product-card" data-url="${url}" data-id="${escapeHtml(product.id)}">
+    <article class="product-card" data-url="${url}" data-id="${id}">
       <button
-        class="heart ${isSaved(product.id) ? "active" : ""}"
-        data-id="${escapeHtml(product.id)}"
-        aria-label="Save ${title} to wishlist"
         type="button"
+        class="heart ${isSaved(product.id) ? "active" : ""}"
+        data-id="${id}"
+        aria-label="Save ${title}"
       >♥</button>
 
       <div class="product-image-wrap">
@@ -271,7 +273,7 @@ function renderProductCard(product) {
   `;
 }
 
-function wireHeartButtons(container, products) {
+function wireCardButtons(container, sourceProducts) {
   if (!container) return;
 
   container.querySelectorAll(".product-card").forEach((card) => {
@@ -290,20 +292,18 @@ function wireHeartButtons(container, products) {
       event.stopPropagation();
 
       const id = btn.dataset.id;
-      const item = products.find((p) => p.id === id);
-      if (!item) return;
+      const product = sourceProducts.find((p) => p.id === id);
+      if (!product) return;
 
-      const didToggle = toggleWishlist(item);
-      if (!didToggle) return;
+      const changed = toggleWishlist(product);
+      if (!changed) return;
 
-      renderHomeTrending(window.__products || []);
-      renderGalleryPage(window.__products || []);
-      renderWishlistPage(window.__products || []);
+      refreshAllUI();
     });
   });
 }
 
-// ========= HOME TRENDING =========
+// ========= HOME =========
 function renderHomeTrending(products) {
   const holder = $("home-trending");
   if (!holder) return;
@@ -313,7 +313,7 @@ function renderHomeTrending(products) {
     .slice(0, 7);
 
   holder.innerHTML = top.map(renderProductCard).join("");
-  wireHeartButtons(holder, products);
+  wireCardButtons(holder, products);
 }
 
 // ========= WISHLIST PAGE =========
@@ -330,10 +330,7 @@ function renderWishlistPage(products) {
   if (!isSignedIn()) {
     signedOut.classList.remove("hidden");
     signedIn.classList.add("hidden");
-
-    if (subtitle) {
-      subtitle.textContent = "Save your favorite gifts and keep your plan organized.";
-    }
+    if (subtitle) subtitle.textContent = "Save your favorite gifts and keep your plan organized.";
     return;
   }
 
@@ -343,40 +340,41 @@ function renderWishlistPage(products) {
   if (emailEl) emailEl.textContent = getUserEmail();
   if (subtitle) subtitle.textContent = "Your saved gifts, all in one place.";
 
-  const ids = getWishlist().map((item) => item.id);
-  const items = ids
-    .map((id) => products.find((p) => p.id === id) || getWishlist().find((p) => p.id === id))
-    .filter(Boolean);
+  const savedItems = getWishlist();
 
-  if (!items.length) {
+  if (!savedItems.length) {
     grid.innerHTML = "";
     emptyEl?.classList.remove("hidden");
     return;
   }
 
+  const fullItems = savedItems.map((saved) => {
+    return products.find((p) => p.id === saved.id) || saved;
+  });
+
   emptyEl?.classList.add("hidden");
-  grid.innerHTML = items.map(renderProductCard).join("");
-  wireHeartButtons(grid, products.length ? products : items);
+  grid.innerHTML = fullItems.map(renderProductCard).join("");
+  wireCardButtons(grid, fullItems);
 }
 
-// ========= GALLERY FILTERS / SORT =========
+// ========= GALLERY =========
 function getGalleryFilters() {
-  const sort =
-    document.querySelector(".sort-btn.active")?.dataset.sort || "popular";
-
   const gender =
     document.querySelector('#genderPills [data-gender].active')?.dataset.gender || "all";
 
+  const sort =
+    document.querySelector(".sort-btn.active")?.dataset.sort || "popular";
+
   const category = $("categoryFilter")?.value || "all";
 
-  return { sort, gender, category };
+  return { gender, sort, category };
 }
 
 function renderGalleryPage(products) {
   const grid = $("gallery-products");
   if (!grid) return;
 
-  const { sort, gender, category } = getGalleryFilters();
+  const { gender, sort, category } = getGalleryFilters();
 
   let list = [...products];
 
@@ -400,32 +398,19 @@ function renderGalleryPage(products) {
     });
   }
 
-  grid.innerHTML = list.map(renderProductCard).join("");
-
   if (!list.length) {
     grid.innerHTML = `<div class="callout"><p>No gifts match this filter yet.</p></div>`;
     return;
   }
 
-  wireHeartButtons(grid, products);
+  grid.innerHTML = list.map(renderProductCard).join("");
+  wireCardButtons(grid, products);
 }
 
 function initGalleryUI(products) {
-  const sortRow = document.querySelector(".sort-row");
   const genderWrap = $("genderPills");
-  const categorySelect = $("categoryFilter");
-
-  sortRow?.addEventListener("click", (event) => {
-    const btn = event.target.closest(".sort-btn");
-    if (!btn) return;
-
-    document.querySelectorAll(".sort-btn").forEach((b) => {
-      b.classList.remove("active");
-    });
-
-    btn.classList.add("active");
-    renderGalleryPage(products);
-  });
+  const sortRow = document.querySelector(".sort-row");
+  const categoryFilter = $("categoryFilter");
 
   genderWrap?.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-gender]");
@@ -439,9 +424,30 @@ function initGalleryUI(products) {
     renderGalleryPage(products);
   });
 
-  categorySelect?.addEventListener("change", () => {
+  sortRow?.addEventListener("click", (event) => {
+    const btn = event.target.closest(".sort-btn");
+    if (!btn) return;
+
+    sortRow.querySelectorAll(".sort-btn").forEach((b) => {
+      b.classList.remove("active");
+    });
+
+    btn.classList.add("active");
     renderGalleryPage(products);
   });
+
+  categoryFilter?.addEventListener("change", () => {
+    renderGalleryPage(products);
+  });
+}
+
+// ========= GLOBAL REFRESH =========
+function refreshAllUI() {
+  const products = window.__products || [];
+  updateAuthUI();
+  renderHomeTrending(products);
+  renderGalleryPage(products);
+  renderWishlistPage(products);
 }
 
 // ========= AUTH FORM =========
@@ -462,11 +468,8 @@ function initAuthForm() {
 
     localStorage.setItem(AUTH_EMAIL_KEY, email);
     closeModal();
-    updateAuthUI();
-    renderWishlistPage(window.__products || []);
-    renderHomeTrending(window.__products || []);
-    renderGalleryPage(window.__products || []);
     closeMobileMenu();
+    refreshAllUI();
   });
 }
 
@@ -479,11 +482,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const products = await loadProducts();
   window.__products = products;
 
-  renderHomeTrending(products);
-  renderWishlistPage(products);
-
   if ($("gallery-products")) {
     initGalleryUI(products);
-    renderGalleryPage(products);
   }
+
+  refreshAllUI();
 });
