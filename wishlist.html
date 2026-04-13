@@ -6,8 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- SEO -->
-  <meta name="description" content="Save your favorite gifts and keep your seven-day wedding gift plan organized." />
-  <meta name="keywords" content="wishlist, gifts for wife, gifts for groom, seven days of gifts" />
+  <meta
+    name="description"
+    content="Save your favorite gifts and keep your seven-day wedding gift plan organized."
+  />
+  <meta
+    name="keywords"
+    content="wishlist, gifts for wife, gifts for groom, seven days of gifts"
+  />
   <link rel="canonical" href="https://7daygifts.com/wishlist.html" />
 
   <link rel="stylesheet" href="style.css" />
@@ -24,7 +30,7 @@
           <span class="logo-text">7 Day Gifts</span>
         </a>
 
-        <nav class="main-nav">
+        <nav class="main-nav" aria-label="Primary">
           <a href="index.html" class="nav-link">Home</a>
           <a href="gift-gallery.html" class="nav-link">Gift Gallery</a>
           <a href="wishlist.html" class="nav-link active">Wish List</a>
@@ -32,35 +38,53 @@
 
         <div class="header-actions">
           <button id="authButton" class="btn-pill btn-primary desktop-only">Sign In</button>
-          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Menu">☰</button>
+          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Open menu">☰</button>
         </div>
       </div>
     </header>
 
+    <!-- TOP DISCLOSURE -->
+    <div class="affiliate-topbar">
+      As an Amazon Associate and affiliate partner, we may earn from qualifying purchases.
+    </div>
+
     <!-- MOBILE MENU -->
-    <div id="mobileMenu" class="mobile-menu">
+    <aside id="mobileMenu" class="mobile-menu" aria-label="Mobile menu">
       <a href="index.html">Home</a>
       <a href="gift-gallery.html">Gift Gallery</a>
       <a href="wishlist.html">Wish List</a>
       <button id="mobileAuthButton" class="mobile-auth">Sign In</button>
-    </div>
+    </aside>
 
     <!-- MAIN -->
     <main class="main-content">
       <section class="section">
         <div class="section-header">
           <div>
-            <h2 class="section-title">Wish List</h2>
-            <p class="section-subtitle" id="wishlistSubtitle">Sign in to view and save your wishlist.</p>
+            <h1 class="section-title">Wish List</h1>
+            <p class="section-subtitle" id="wishlistSubtitle">
+              Save your favorite gifts and keep your plan organized.
+            </p>
           </div>
         </div>
 
+        <!-- SIGNED OUT -->
         <div id="wishlistSignedOut" class="wishlist-note">
-          <p>You’re not signed in yet. Click <strong>Sign In</strong> to save and view items.</p>
+          <p>
+            You’re not signed in yet. Click <strong>Sign In</strong> to save and view your wishlist.
+          </p>
         </div>
 
+        <!-- SIGNED IN -->
         <div id="wishlistSignedIn" class="hidden">
-          <p class="wishlist-note">Signed in as: <strong id="signedInEmail"></strong></p>
+          <div class="wishlist-note">
+            Signed in as: <strong id="signedInEmail"></strong>
+          </div>
+
+          <div id="wishlistEmpty" class="callout hidden">
+            <p>Your wishlist is empty. Browse gifts and tap the heart to save items.</p>
+          </div>
+
           <div class="product-grid" id="wishlist-products"></div>
         </div>
       </section>
@@ -77,12 +101,18 @@
         When you buy through our links, we may earn a small commission.
       </div>
     </footer>
-
   </div>
 
   <!-- SIGN IN MODAL -->
   <div id="authBackdrop" class="modal-backdrop hidden"></div>
-  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+  <div
+    id="authModal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalTitle"
+  >
     <div class="modal-head">
       <h3 class="modal-title" id="modalTitle">Sign In</h3>
       <button id="authModalClose" class="modal-x" aria-label="Close">×</button>
@@ -100,11 +130,18 @@
       </label>
 
       <p class="terms-link">
-        <a href="terms.html" target="_blank" rel="noopener">View Terms &amp; Conditions</a>
+        <a href="terms.html" target="_blank" rel="noopener">
+          View Terms &amp; Conditions
+        </a>
       </p>
 
-      <button type="submit" class="btn-pill btn-primary modal-submit">Continue</button>
-      <p class="modal-fine">We’ll store your email locally on this device for your wishlist.</p>
+      <button type="submit" class="btn-pill btn-primary modal-submit">
+        Continue
+      </button>
+
+      <p class="modal-fine">
+        We’ll store your email locally on this device for your wishlist.
+      </p>
     </form>
   </div>
 
