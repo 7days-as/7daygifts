@@ -5,9 +5,14 @@
   <title>Gift Gallery · 7 Day Gifts</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- SEO -->
-  <meta name="description" content="Browse curated gift ideas for the seven days before your wedding. Filter by him/her, price, and category." />
-  <meta name="keywords" content="gift gallery, gifts for wife, gifts for groom, seven days of gifts, wedding gifts" />
+  <meta
+    name="description"
+    content="Browse curated gift ideas for the seven days before your wedding. Filter by who it’s for and category, then sort by popularity or recency."
+  />
+  <meta
+    name="keywords"
+    content="gift gallery, gifts for wife, gifts for groom, seven days of gifts, wedding gifts"
+  />
   <link rel="canonical" href="https://7daygifts.com/gift-gallery.html" />
 
   <link rel="stylesheet" href="style.css" />
@@ -16,7 +21,7 @@
 <body>
   <div class="page" id="gallery-page">
 
-    <!-- HEADER (matches index.html) -->
+    <!-- HEADER -->
     <header class="site-header">
       <div class="header-inner">
         <a href="index.html" class="logo-wrap" aria-label="Home">
@@ -24,7 +29,7 @@
           <span class="logo-text">7 Day Gifts</span>
         </a>
 
-        <nav class="main-nav">
+        <nav class="main-nav" aria-label="Primary">
           <a href="index.html" class="nav-link">Home</a>
           <a href="gift-gallery.html" class="nav-link active">Gift Gallery</a>
           <a href="wishlist.html" class="nav-link">Wish List</a>
@@ -32,72 +37,75 @@
 
         <div class="header-actions">
           <button id="authButton" class="btn-pill btn-primary desktop-only">Sign In</button>
-          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Menu">☰</button>
+          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Open menu">☰</button>
         </div>
       </div>
     </header>
 
+    <!-- TOP DISCLOSURE -->
+    <div class="affiliate-topbar">
+      As an Amazon Associate and affiliate partner, we may earn from qualifying purchases.
+    </div>
+
     <!-- MOBILE MENU -->
-    <div id="mobileMenu" class="mobile-menu">
+    <aside id="mobileMenu" class="mobile-menu" aria-label="Mobile menu">
       <a href="index.html">Home</a>
       <a href="gift-gallery.html">Gift Gallery</a>
       <a href="wishlist.html">Wish List</a>
       <button id="mobileAuthButton" class="mobile-auth">Sign In</button>
-    </div>
+    </aside>
 
     <!-- MAIN -->
     <main class="main-content">
       <section class="section">
         <div class="section-header">
           <div>
-            <h2 class="section-title">Gift Gallery</h2>
-            <p class="section-subtitle">Filter by who it’s for, price, and category — then sort.</p>
+            <h1 class="section-title">Gift Gallery</h1>
+            <p class="section-subtitle">
+              Filter by who it’s for and category — then sort.
+            </p>
           </div>
         </div>
 
-        <!-- Apple-style Filters Card -->
-        <div class="filters apple-filters">
-          <!-- Row 1: Gender + Sort -->
-          <div class="apple-row">
-            <div class="apple-block">
-              <div class="filter-label">Who is it for?</div>
-
-              <div class="segmented" id="genderPills" role="tablist" aria-label="Gender filter">
-                <button type="button" class="seg-btn active pill" data-gender="all">All</button>
-                <button type="button" class="seg-btn pill" data-gender="him">For Him</button>
-                <button type="button" class="seg-btn pill" data-gender="her">For Her</button>
-              </div>
-            </div>
-
-            <div class="apple-block">
-              <div class="filter-label">Sort</div>
-
-              <div class="segmented sort-row" role="tablist" aria-label="Sort">
-                <button type="button" class="seg-btn sort-btn active" data-sort="popular">Most Popular</button>
-                <button type="button" class="seg-btn sort-btn" data-sort="price-asc">Price ↑</button>
-                <button type="button" class="seg-btn sort-btn" data-sort="price-desc">Price ↓</button>
-                <button type="button" class="seg-btn sort-btn" data-sort="recent">Most Recent</button>
-              </div>
+        <!-- FILTERS -->
+        <div class="filters">
+          <div class="filter-group">
+            <div class="filter-label">Who is it for?</div>
+            <div class="pill-row" id="genderPills" aria-label="Gender filter">
+              <button type="button" class="pill active" data-gender="all">All</button>
+              <button type="button" class="pill" data-gender="him">For Him</button>
+              <button type="button" class="pill" data-gender="her">For Her</button>
             </div>
           </div>
 
-          <!-- Row 2: Price -->
-          <div class="apple-row">
-            <div class="apple-block" style="width:100%;">
-              <div class="filter-label">Price up to</div>
-              <div class="price-row">
-                <input id="priceRange" type="range" min="10" max="300" step="10" value="300" />
-                <div class="price-badge" id="priceValue">$300</div>
-              </div>
+          <div class="filter-group">
+            <div class="filter-label">Sort</div>
+            <div class="sort-row" aria-label="Sort">
+              <button type="button" class="sort-btn active" data-sort="popular">Most Popular</button>
+              <button type="button" class="sort-btn" data-sort="recent">Most Recent</button>
             </div>
           </div>
 
-          <!-- Row 3: Categories -->
-          <div class="apple-row">
-            <div class="apple-block" style="width:100%;">
-              <div class="filter-label">Category</div>
-              <div class="check-grid" id="categoryChips"></div>
-            </div>
+          <div class="filter-group">
+            <div class="filter-label">Category</div>
+            <select id="categoryFilter" class="sort-select" aria-label="Category filter">
+              <option value="all">All Categories</option>
+              <option value="Accessories">Accessories</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Cosmetics">Cosmetics</option>
+              <option value="Funny">Funny</option>
+              <option value="Funny Cards">Funny Cards</option>
+              <option value="Gadgets">Gadgets</option>
+              <option value="Games">Games</option>
+              <option value="Guitar">Guitar</option>
+              <option value="Home">Home</option>
+              <option value="Kitchen">Kitchen</option>
+              <option value="Nice Cards">Nice Cards</option>
+              <option value="Outdoors">Outdoors</option>
+              <option value="Pickleball">Pickleball</option>
+              <option value="Travel">Travel</option>
+              <option value="Writing">Writing</option>
+            </select>
           </div>
         </div>
 
@@ -116,12 +124,18 @@
         When you buy through our links, we may earn a small commission.
       </div>
     </footer>
-
   </div>
 
-  <!-- SIGN IN MODAL (matches index.html IDs/classes) -->
+  <!-- SIGN IN MODAL -->
   <div id="authBackdrop" class="modal-backdrop hidden"></div>
-  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+  <div
+    id="authModal"
+    class="modal hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalTitle"
+  >
     <div class="modal-head">
       <h3 class="modal-title" id="modalTitle">Sign In</h3>
       <button id="authModalClose" class="modal-x" aria-label="Close">×</button>
@@ -143,7 +157,9 @@
       </p>
 
       <button type="submit" class="btn-pill btn-primary modal-submit">Continue</button>
-      <p class="modal-fine">We’ll store your email locally on this device for your wishlist.</p>
+      <p class="modal-fine">
+        We’ll store your email locally on this device for your wishlist.
+      </p>
     </form>
   </div>
 
