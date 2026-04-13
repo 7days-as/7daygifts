@@ -1,27 +1,92 @@
 // ========= CONFIG =========
 const AUTH_EMAIL_KEY = "userEmail";
 const WISHLIST_KEY = "7DG_WISHLIST";
-const API_BASE = ""; // future API (blank = use mock)
-
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIP3mbNKwA1vi20Aufe7uKOBp-9HYV1kIot6FNnbZyPG7IT9xazlOqA9jii5b9lLuJBO6ydMNiyzSi/pub?gid=0&single=true&output=csv";
 
 // ========= HELPERS =========
 const $ = (id) => document.getElementById(id);
 
-function safeParse(v, fallback){
-  try { return JSON.parse(v) ?? fallback; }
-  catch { return fallback; }
+function safeParse(value, fallback) {
+  try {
+    return JSON.parse(value) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function normalizeGender(value) {
+  const v = String(value || "").trim().toLowerCase();
+
+  if (["him", "for him", "male", "man", "men", "groom"].includes(v)) return "him";
+  if (["her", "for her", "female", "woman", "women", "bride", "wife", "fiancee"].includes(v)) return "her";
+  return "all";
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      i += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  result.push(current);
+  return result.map((item) => item.trim());
+}
+
+function formatPrice(price) {
+  const n = Number(price);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  return `$${n}`;
 }
 
 // ========= AUTH =========
-function getUserEmail(){ return localStorage.getItem(AUTH_EMAIL_KEY) || ""; }
-function isSignedIn(){ return !!getUserEmail(); }
+function getUserEmail() {
+  return localStorage.getItem(AUTH_EMAIL_KEY) || "";
+}
 
-function updateAuthUI(){
+function isSignedIn() {
+  return !!getUserEmail();
+}
+
+function updateAuthUI() {
   const authButton = $("authButton");
   const mobileAuthButton = $("mobileAuthButton");
+  const email = getUserEmail();
 
-  if (isSignedIn()){
-    if (authButton) authButton.textContent = getUserEmail(); // desktop shows email
+  if (email) {
+    if (authButton) authButton.textContent = "Sign Out";
     if (mobileAuthButton) mobileAuthButton.textContent = "Sign Out";
   } else {
     if (authButton) authButton.textContent = "Sign In";
@@ -29,347 +94,395 @@ function updateAuthUI(){
   }
 }
 
-function openModal(){
-  // supports BOTH modal styles you have used
-  const b1 = $("authBackdrop");
-  const b2 = $("authModalBackdrop");
-  const m  = $("authModal");
-
-  b1?.classList.remove("hidden");
-  if (b2) b2.hidden = false;
-
-  m?.classList.remove("hidden");
-  if (m) m.hidden = false;
+function openModal() {
+  $("authBackdrop")?.classList.remove("hidden");
+  $("authModal")?.classList.remove("hidden");
 }
 
-function closeModal(){
-  const b1 = $("authBackdrop");
-  const b2 = $("authModalBackdrop");
-  const m  = $("authModal");
-
-  b1?.classList.add("hidden");
-  if (b2) b2.hidden = true;
-
-  m?.classList.add("hidden");
-  if (m) m.hidden = true;
+function closeModal() {
+  $("authBackdrop")?.classList.add("hidden");
+  $("authModal")?.classList.add("hidden");
 }
 
-function handleAuthClick(){
-  if (isSignedIn()){
+function closeMobileMenu() {
+  $("mobileMenu")?.classList.remove("open");
+}
+
+function handleAuthClick() {
+  if (isSignedIn()) {
     localStorage.removeItem(AUTH_EMAIL_KEY);
     updateAuthUI();
-    // optional redirect:
-    // window.location.href = "index.html";
-  } else {
-    openModal();
+    renderWishlistPage(window.__products || []);
+    renderHomeTrending(window.__products || []);
+    renderGalleryPage(window.__products || []);
+    closeMobileMenu();
+    return;
   }
+
+  openModal();
+  closeMobileMenu();
 }
 
 // ========= WISHLIST =========
-function getWishlist(){ return safeParse(localStorage.getItem(WISHLIST_KEY), []); }
-function setWishlist(list){ localStorage.setItem(WISHLIST_KEY, JSON.stringify(list)); }
-function isSaved(id){ return getWishlist().some(x => x.id === id); }
+function getWishlistMap() {
+  return safeParse(localStorage.getItem(WISHLIST_KEY), {});
+}
 
-function toggleWishlist(item){
+function saveWishlistMap(map) {
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(map));
+}
+
+function getWishlist() {
+  const email = getUserEmail();
+  if (!email) return [];
+
+  const map = getWishlistMap();
+  return Array.isArray(map[email]) ? map[email] : [];
+}
+
+function setWishlist(list) {
+  const email = getUserEmail();
+  if (!email) return;
+
+  const map = getWishlistMap();
+  map[email] = list;
+  saveWishlistMap(map);
+}
+
+function isSaved(id) {
+  return getWishlist().some((item) => item.id === id);
+}
+
+function toggleWishlist(item) {
+  if (!isSignedIn()) {
+    openModal();
+    return false;
+  }
+
   const list = getWishlist();
-  const idx = list.findIndex(x => x.id === item.id);
-  if (idx >= 0) list.splice(idx, 1);
-  else list.push(item);
+  const index = list.findIndex((x) => x.id === item.id);
+
+  if (index >= 0) {
+    list.splice(index, 1);
+  } else {
+    list.push(item);
+  }
+
   setWishlist(list);
+  return true;
 }
 
 // ========= MENU =========
-function initMenu(){
-  // supports your newer mobile menu (menuToggle/mobileMenu)
+function initMenu() {
   const btn = $("menuToggle");
   const menu = $("mobileMenu");
-  if (btn && menu){
-    btn.addEventListener("click", () => menu.classList.toggle("open"));
-  }
 
-  // supports your older nav toggle (navToggle/nav) if that page exists
-  const navBtn = $("navToggle");
-  const nav = $("nav");
-  if (navBtn && nav){
-    navBtn.addEventListener("click", () => {
-      const isOpen = nav.classList.toggle("open");
-      navBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  if (!btn || !menu) return;
+
+  btn.addEventListener("click", () => {
+    menu.classList.toggle("open");
+  });
+
+  menu.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      menu.classList.remove("open");
     });
-  }
+  });
 }
 
 // ========= PRODUCTS =========
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIP3mbNKwA1vi20Aufe7uKOBp-9HYV1kIot6FNnbZyPG7IT9xazlOqA9jii5b9lLuJBO6ydMNiyzSi/pub?gid=0&single=true&output=csv";
-
-async function loadProducts(){
+async function loadProducts() {
   try {
     const response = await fetch(SHEET_URL);
     const csvText = await response.text();
 
-    const rows = csvText.split("\n").map(r => r.split(","));
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
+    const lines = csvText
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
 
-    const products = dataRows.map(row => {
-      const obj = {};
-      headers.forEach((header, i) => {
-        obj[header.trim()] = row[i];
-      });
+    if (!lines.length) return [];
 
-      return {
-        id: obj.product_id || obj.amazon_asin,
-        title: obj.site_title,
-        price: Number(obj.price) || 0,
-        image: obj.photo_url,
-        url: `https://www.amazon.com/dp/${obj.amazon_asin}?tag=7daygifts-20`,
-        category: obj.categories,
-        gender: obj.who_is_it_for || "all",
-        popularity: Number(obj.click_count) || 0,
-        addedAt: Date.now(),
-        status: obj.status
-      };
-    });
+    const headers = parseCSVLine(lines[0]);
+    const rows = lines.slice(1).map(parseCSVLine);
 
-    return products.filter(p =>
-      p.status && p.status.trim().toLowerCase() === "active"
-    );
+    const products = rows
+      .map((row, index) => {
+        const obj = {};
+        headers.forEach((header, i) => {
+          obj[String(header).trim()] = row[i] ?? "";
+        });
 
-  } catch (err) {
-    console.error("Error loading sheet:", err);
+        const asin = obj.amazon_asin?.trim();
+        const id = obj.product_id?.trim() || asin || `product-${index + 1}`;
+
+        return {
+          id,
+          asin,
+          title: obj.site_title?.trim() || "Untitled product",
+          price: Number(obj.price) || 0,
+          image: obj.photo_url?.trim() || "",
+          url: asin ? `https://www.amazon.com/dp/${asin}?tag=7daygifts-20` : "#",
+          category: obj.categories?.trim() || "",
+          gender: normalizeGender(obj.who_is_it_for),
+          popularity: Number(obj.click_count) || 0,
+          addedAt:
+            obj.added_at?.trim() ||
+            obj.created_at?.trim() ||
+            obj.date_added?.trim() ||
+            `2026-01-${String((index % 28) + 1).padStart(2, "0")}`,
+          status: obj.status?.trim() || ""
+        };
+      })
+      .filter((product) => product.status.toLowerCase() === "active");
+
+    return products;
+  } catch (error) {
+    console.error("Error loading sheet:", error);
     return [];
   }
 }
-// ========= UI: Product Cards =========
-function renderProductCard(p){
+
+// ========= UI: PRODUCT CARDS =========
+function renderProductCard(product) {
+  const title = escapeHtml(product.title);
+  const image = escapeHtml(product.image);
+  const url = escapeHtml(product.url);
+  const price = formatPrice(product.price);
+
   return `
-    <article class="product-card" data-url="${p.url}">
-      <button class="heart ${isSaved(p.id) ? "active" : ""}" data-id="${p.id}" aria-label="Save">♥</button>
-      <img src="${p.image}" alt="${p.title}">
-      <h3>${p.title}</h3>
-      <div class="product-price">${p.price ? `$${p.price}` : ""}</div>
+    <article class="product-card" data-url="${url}" data-id="${escapeHtml(product.id)}">
+      <button
+        class="heart ${isSaved(product.id) ? "active" : ""}"
+        data-id="${escapeHtml(product.id)}"
+        aria-label="Save ${title} to wishlist"
+        type="button"
+      >♥</button>
+
+      <div class="product-image-wrap">
+        <img class="product-image" src="${image}" alt="${title}" loading="lazy" />
+      </div>
+
+      <div class="product-card-body">
+        <h3 class="product-title">${title}</h3>
+        <div class="product-price">${price}</div>
+      </div>
     </article>
   `;
 }
 
-function wireHeartButtons(container, products){
+function wireHeartButtons(container, products) {
+  if (!container) return;
 
-  // Card click
-  container.querySelectorAll(".product-card").forEach(card => {
-    card.addEventListener("click", (e) => {
-      if (e.target.closest(".heart")) return; // don't trigger if heart clicked
+  container.querySelectorAll(".product-card").forEach((card) => {
+    card.addEventListener("click", (event) => {
+      if (event.target.closest(".heart")) return;
+
       const url = card.dataset.url;
-      if (url) window.open(url, "_blank");
+      if (url && url !== "#") {
+        window.open(url, "_blank", "noopener");
+      }
     });
   });
 
-  // Heart buttons
-  container.querySelectorAll(".heart").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
+  container.querySelectorAll(".heart").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+
       const id = btn.dataset.id;
-      const item = products.find(p => p.id === id);
+      const item = products.find((p) => p.id === id);
       if (!item) return;
-      toggleWishlist(item);
-      btn.classList.toggle("active", isSaved(id));
+
+      const didToggle = toggleWishlist(item);
+      if (!didToggle) return;
+
+      renderHomeTrending(window.__products || []);
+      renderGalleryPage(window.__products || []);
+      renderWishlistPage(window.__products || []);
     });
   });
 }
 
 // ========= HOME TRENDING =========
-function renderHomeTrending(products){
+function renderHomeTrending(products) {
   const holder = $("home-trending");
   if (!holder) return;
 
-  const top = [...products].sort((a,b) => (b.popularity||0) - (a.popularity||0)).slice(0,7);
+  const top = [...products]
+    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+    .slice(0, 7);
+
   holder.innerHTML = top.map(renderProductCard).join("");
   wireHeartButtons(holder, products);
 }
 
 // ========= WISHLIST PAGE =========
-function renderWishlistPage(){
+function renderWishlistPage(products) {
   const grid = $("wishlist-products");
   const signedOut = $("wishlistSignedOut");
   const signedIn = $("wishlistSignedIn");
   const emailEl = $("signedInEmail");
+  const emptyEl = $("wishlistEmpty");
+  const subtitle = $("wishlistSubtitle");
 
   if (!grid || !signedOut || !signedIn) return;
 
-  if (!isSignedIn()){
+  if (!isSignedIn()) {
     signedOut.classList.remove("hidden");
     signedIn.classList.add("hidden");
+
+    if (subtitle) {
+      subtitle.textContent = "Save your favorite gifts and keep your plan organized.";
+    }
     return;
   }
 
   signedOut.classList.add("hidden");
   signedIn.classList.remove("hidden");
-  if (emailEl) emailEl.textContent = getUserEmail();
 
-  const items = getWishlist();
-  if (!items.length){
-    grid.innerHTML = `<p>No saved gifts yet.</p>`;
+  if (emailEl) emailEl.textContent = getUserEmail();
+  if (subtitle) subtitle.textContent = "Your saved gifts, all in one place.";
+
+  const ids = getWishlist().map((item) => item.id);
+  const items = ids
+    .map((id) => products.find((p) => p.id === id) || getWishlist().find((p) => p.id === id))
+    .filter(Boolean);
+
+  if (!items.length) {
+    grid.innerHTML = "";
+    emptyEl?.classList.remove("hidden");
     return;
   }
 
+  emptyEl?.classList.add("hidden");
   grid.innerHTML = items.map(renderProductCard).join("");
-  wireHeartButtons(grid, items);
+  wireHeartButtons(grid, products.length ? products : items);
 }
 
 // ========= GALLERY FILTERS / SORT =========
-function buildCategoryFilters(products){
-  const holder =
-    $("categoryChips") ||
-    $("categoryChecks");
-
-  if (!holder) return;
-
-  const categories = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
-
-  holder.innerHTML = categories.map(cat => `
-    <label class="filter-chip">
-      <input type="checkbox" value="${cat}">
-      <span>${cat}</span>
-    </label>
-  `).join("");
-
-  holder.querySelectorAll("input").forEach(cb => {
-    cb.addEventListener("change", () => renderGalleryPage(window.__products));
-  });
-}
-
-function getGalleryFilters(){
-  const maxPrice = Number($("priceRange")?.value || 9999);
-
-  const catRoot =
-    document.getElementById("categoryChips") ||
-    document.getElementById("categoryChecks");
-
-  const categories = catRoot
-    ? [...catRoot.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.value)
-    : [];
-
+function getGalleryFilters() {
   const sort =
-    document.querySelector(".sort-btn.active")?.dataset.sort ||
-    document.getElementById("sortSelect")?.value ||
-    "popular";
+    document.querySelector(".sort-btn.active")?.dataset.sort || "popular";
 
   const gender =
-    document.querySelector('#genderPills [data-gender].active')?.dataset.gender ||
-    document.querySelector('input[name="gender"]:checked')?.value ||
-    "all";
+    document.querySelector('#genderPills [data-gender].active')?.dataset.gender || "all";
 
-  return { maxPrice, categories, sort, gender };
+  const category = $("categoryFilter")?.value || "all";
+
+  return { sort, gender, category };
 }
 
-function renderGalleryPage(products){
-  const grid =
-    $("gallery-products") || // your current gallery id
-    $("galleryGrid");        // older gallery id
-
+function renderGalleryPage(products) {
+  const grid = $("gallery-products");
   if (!grid) return;
 
-  const { maxPrice, categories, sort, gender } = getGalleryFilters();
+  const { sort, gender, category } = getGalleryFilters();
 
   let list = [...products];
 
-  // gender
-  if (gender !== "all"){
-    list = list.filter(p => p.gender === gender || p.gender === "all");
+  if (gender !== "all") {
+    list = list.filter((p) => p.gender === gender || p.gender === "all");
   }
 
-  // price
-  list = list.filter(p => (p.price || 0) <= maxPrice);
-
-  // categories
-  if (categories.length){
-    list = list.filter(p => categories.includes(p.category));
+  if (category !== "all") {
+    list = list.filter((p) => p.category === category);
   }
 
-  // sort
-  if (sort === "popular")   list.sort((a,b) => (b.popularity||0) - (a.popularity||0));
-  if (sort === "price-asc") list.sort((a,b) => (a.price||0) - (b.price||0));
-  if (sort === "price-desc")list.sort((a,b) => (b.price||0) - (a.price||0));
-  if (sort === "recent")    list.sort((a,b) => (b.addedAt||0) - (a.addedAt||0));
+  if (sort === "popular") {
+    list.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+  }
 
-  grid.innerHTML = list.map(renderProductCard).join("");
-  wireHeartButtons(grid, products);
-}
-
-function initGalleryUI(products){
-  // slider label
-  const range = $("priceRange");
-  const value = $("priceValue");
-  if (range && value){
-    value.textContent = `$${range.value}`;
-    range.addEventListener("input", () => {
-      value.textContent = `$${range.value}`;
-      renderGalleryPage(window.__products);
+  if (sort === "recent") {
+    list.sort((a, b) => {
+      const aDate = new Date(a.addedAt || 0).getTime();
+      const bDate = new Date(b.addedAt || 0).getTime();
+      return bDate - aDate;
     });
   }
 
-  // sort pills
-  document.querySelector(".sort-row")?.addEventListener("click", (e) => {
-    const btn = e.target.closest(".sort-btn");
-    if (!btn) return;
-    document.querySelectorAll(".sort-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    renderGalleryPage(window.__products);
-  });
+  grid.innerHTML = list.map(renderProductCard).join("");
 
-  // sort dropdown (older UI)
-  document.getElementById("sortSelect")?.addEventListener("change", () => {
-    renderGalleryPage(window.__products);
-  });
+  if (!list.length) {
+    grid.innerHTML = `<div class="callout"><p>No gifts match this filter yet.</p></div>`;
+    return;
+  }
 
-  // gender pills
-  const genderWrap = document.getElementById("genderPills");
-  genderWrap?.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-gender]");
-    if (!btn) return;
-    genderWrap.querySelectorAll("[data-gender]").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    renderGalleryPage(window.__products);
-  });
-
-  // gender radios (older UI)
-  document.querySelectorAll('input[name="gender"]').forEach(r => {
-    r.addEventListener("change", () => renderGalleryPage(window.__products));
-  });
-
-  buildCategoryFilters(products);
+  wireHeartButtons(grid, products);
 }
 
-// ========= INIT =========
-document.addEventListener("DOMContentLoaded", async () => {
-  initMenu();
-  updateAuthUI();
+function initGalleryUI(products) {
+  const sortRow = document.querySelector(".sort-row");
+  const genderWrap = $("genderPills");
+  const categorySelect = $("categoryFilter");
 
+  sortRow?.addEventListener("click", (event) => {
+    const btn = event.target.closest(".sort-btn");
+    if (!btn) return;
+
+    document.querySelectorAll(".sort-btn").forEach((b) => {
+      b.classList.remove("active");
+    });
+
+    btn.classList.add("active");
+    renderGalleryPage(products);
+  });
+
+  genderWrap?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-gender]");
+    if (!btn) return;
+
+    genderWrap.querySelectorAll("[data-gender]").forEach((b) => {
+      b.classList.remove("active");
+    });
+
+    btn.classList.add("active");
+    renderGalleryPage(products);
+  });
+
+  categorySelect?.addEventListener("change", () => {
+    renderGalleryPage(products);
+  });
+}
+
+// ========= AUTH FORM =========
+function initAuthForm() {
   $("authButton")?.addEventListener("click", handleAuthClick);
   $("mobileAuthButton")?.addEventListener("click", handleAuthClick);
 
   $("authModalClose")?.addEventListener("click", closeModal);
   $("authBackdrop")?.addEventListener("click", closeModal);
-  $("authModalBackdrop")?.addEventListener("click", closeModal);
 
-  $("authForm")?.addEventListener("submit", (e) => {
-    e.preventDefault();
+  $("authForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+
     const email = $("authEmail")?.value?.trim();
-    if (!email) return;
+    const agree = $("authAgree")?.checked;
+
+    if (!email || !agree) return;
+
     localStorage.setItem(AUTH_EMAIL_KEY, email);
     closeModal();
     updateAuthUI();
+    renderWishlistPage(window.__products || []);
+    renderHomeTrending(window.__products || []);
+    renderGalleryPage(window.__products || []);
+    closeMobileMenu();
   });
+}
+
+// ========= INIT =========
+document.addEventListener("DOMContentLoaded", async () => {
+  initMenu();
+  initAuthForm();
+  updateAuthUI();
 
   const products = await loadProducts();
   window.__products = products;
 
-  // Home
   renderHomeTrending(products);
+  renderWishlistPage(products);
 
-  // Wishlist (only runs if wishlist DOM exists)
-  renderWishlistPage();
-
-  // Gallery (only runs if gallery DOM exists)
-  if ($("gallery-products") || $("galleryGrid")){
+  if ($("gallery-products")) {
     initGalleryUI(products);
     renderGalleryPage(products);
   }
