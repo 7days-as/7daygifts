@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>7 Day Gifts · Seven Days. Endless Meaning.</title>
-  <link rel="icon" type="image/png" href="/logo.png">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta
     name="description"
-    content="Elegant, meaningful gifts for the seven days before your wedding. Curated gift ideas for Jewish couples: gifts for your wife, fiancé, or groom."
+    content="Thoughtful 7-day wedding gift ideas, anniversary gifts, and Jewish holiday gift inspiration. Browse curated gifts for your spouse and join our list for future catalogs."
   />
   <meta
     name="keywords"
-    content="seven days of gifts, 7 day gifts, gifts for wife, gifts for fiance, gifts for groom, wedding countdown gifts, jewish wedding gifts"
+    content="7 day gifts, seven day gifts, wedding gift ideas, anniversary gifts, jewish holiday gifts, chanukah gifts for wife, gifts for spouse, jewish wedding gifts"
   />
   <link rel="canonical" href="https://7daygifts.com/" />
 
@@ -22,7 +21,6 @@
 <body>
   <div class="page" id="home-page">
 
-    <!-- HEADER -->
     <header class="site-header">
       <div class="header-inner">
         <a href="index.html" class="logo-wrap" aria-label="Home">
@@ -37,29 +35,23 @@
         </nav>
 
         <div class="header-actions">
-          <button id="authButton" class="btn-pill btn-primary desktop-only">Sign In</button>
           <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Open menu">☰</button>
         </div>
       </div>
     </header>
 
-    <!-- TOP DISCLOSURE -->
     <div class="affiliate-topbar">
       As an Amazon Associate and affiliate partner, we may earn from qualifying purchases.
     </div>
 
-    <!-- MOBILE MENU -->
     <aside id="mobileMenu" class="mobile-menu" aria-label="Mobile menu">
       <a href="index.html">Home</a>
       <a href="gift-gallery.html">Gift Gallery</a>
       <a href="wishlist.html">Wish List</a>
-      <button id="mobileAuthButton" class="mobile-auth">Sign In</button>
     </aside>
 
-    <!-- MAIN -->
     <main class="main-content">
 
-      <!-- HERO -->
       <section class="section hero">
         <div class="hero-card">
           <h1 class="hero-title">
@@ -67,9 +59,7 @@
           </h1>
 
           <p class="hero-subtitle">
-            Feeling overwhelmed trying to plan seven meaningful gifts? You’re not alone.
-            Finding seven thoughtful gifts can feel stressful during an already busy time.
-            Browse our curated collections to make each day feel intentional — without overthinking it.
+            Feeling overwhelmed trying to plan seven meaningful gifts? Browse curated ideas for the week before the wedding, anniversaries, and special occasions so choosing something thoughtful feels easier.
           </p>
 
           <div class="hero-actions">
@@ -79,7 +69,6 @@
         </div>
       </section>
 
-      <!-- TRENDING -->
       <section class="section">
         <div class="section-header">
           <div>
@@ -93,21 +82,67 @@
         <div class="product-grid" id="home-trending"></div>
       </section>
 
-      <!-- MISSION -->
       <section class="section">
         <div class="callout">
           <h3>Our Mission</h3>
           <p>
             7 Day Gifts exists to make the seven days before your wedding feel intentional,
             meaningful, and joyful. Our gift ideas help couples add thoughtfulness and
-            connection during the most special week of their lives.
+            connection during one of the most special weeks of their lives.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="email-capture-card">
+          <h3 class="email-capture-title">Join Our List for Future Gift Ideas</h3>
+          <p class="email-capture-text">
+            Get anniversary reminders, Chanukah gift ideas, Jewish holiday gift catalogs, and thoughtful inspiration for the moments when you do not want to feel stuck choosing a gift.
+          </p>
+
+          <form id="emailForm" class="email-form">
+            <input
+              type="email"
+              id="emailInput"
+              class="email-input"
+              placeholder="Email address"
+              required
+            />
+
+            <input
+              type="date"
+              id="weddingDate"
+              class="email-input"
+            />
+
+            <div class="hp-wrap" aria-hidden="true">
+              <label for="companyField">Company</label>
+              <input
+                type="text"
+                id="companyField"
+                name="company"
+                tabindex="-1"
+                autocomplete="off"
+              />
+            </div>
+
+            <button type="submit" class="btn-pill btn-primary email-submit">
+              Join Our List
+            </button>
+          </form>
+
+          <p id="emailSuccess" class="email-message hidden">
+            You're in — we saved your info.
+          </p>
+
+          <p id="emailError" class="email-message email-error hidden">
+            Something went wrong. Please try again.
           </p>
         </div>
       </section>
 
     </main>
 
-    <!-- FOOTER -->
     <footer class="site-footer">
       <div class="footer-inner">
         <span>© 2025 7DayGifts.com</span>
@@ -120,43 +155,6 @@
     </footer>
   </div>
 
-  <!-- SIGN IN MODAL -->
-  <div id="authBackdrop" class="modal-backdrop hidden"></div>
-
-  <div
-    id="authModal"
-    class="modal hidden"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="modalTitle"
-  >
-    <div class="modal-head">
-      <h3 class="modal-title" id="modalTitle">Sign In</h3>
-      <button id="authModalClose" class="modal-x" aria-label="Close">×</button>
-    </div>
-
-    <form id="authForm" class="modal-body">
-      <label class="field">
-        <span>Email</span>
-        <input id="authEmail" type="email" placeholder="you@example.com" required />
-      </label>
-
-      <label class="checkline">
-        <input id="authAgree" type="checkbox" required />
-        <span>I agree to the Terms &amp; Conditions</span>
-      </label>
-
-      <p class="terms-link">
-        <a href="terms.html" target="_blank" rel="noopener">View Terms &amp; Conditions</a>
-      </p>
-
-      <button type="submit" class="btn-pill btn-primary modal-submit">Continue</button>
-      <p class="modal-fine">
-        We’ll store your email locally on this device for your wishlist.
-      </p>
-    </form>
-  </div>
-
-  <script src="app.js"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
