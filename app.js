@@ -175,10 +175,6 @@ function renderProductCard(product) {
   const price = formatPrice(product.price);
   const hasImage = Boolean(product.image && product.image.trim());
 
-  const imageHtml = hasImage
-    ? `<img class="product-image" src="${escapeHtml(product.image)}" alt="${title}" loading="lazy" onerror="this.closest('.product-image-wrap').classList.add('image-missing'); this.remove();" />`
-    : `<div class="image-fallback">Image coming soon</div>`;
-
   return `
     <article class="product-card" data-url="${url}" data-id="${id}">
       <button
@@ -189,8 +185,18 @@ function renderProductCard(product) {
       >♥</button>
 
       <div class="product-image-wrap ${hasImage ? "" : "image-missing"}">
-        ${hasImage ? imageHtml : ""}
-        ${hasImage ? '<div class="image-fallback">Image coming soon</div>' : ""}
+        ${
+          hasImage
+            ? `<img
+                class="product-image"
+                src="${escapeHtml(product.image)}"
+                alt="${title}"
+                loading="lazy"
+                onerror="this.style.display='none'; this.parentElement.classList.add('image-missing');"
+              />`
+            : ""
+        }
+        <div class="image-fallback">Image coming soon</div>
       </div>
 
       <div class="product-card-body">
@@ -200,7 +206,6 @@ function renderProductCard(product) {
     </article>
   `;
 }
-
 function wireCardButtons(container, sourceProducts) {
   if (!container) return;
 
