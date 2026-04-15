@@ -102,42 +102,37 @@
     </p>
 
     <form id="emailForm" class="email-form">
-      <label class="email-field">
-        <span class="email-label">Email address</span>
-        <input
-          type="email"
-          id="emailInput"
-          class="email-input"
-          placeholder="Enter your email"
-          required
-        />
-      </label>
+  <label class="email-label" for="emailInput">Email address</label>
+  <input
+    type="email"
+    id="emailInput"
+    class="email-input"
+    placeholder="Enter your email"
+    required
+  />
 
-      <label class="email-field">
-        <span class="email-label">Wedding date (optional)</span>
-        <input
-          type="date"
-          id="weddingDate"
-          class="email-input"
-        />
-      </label>
+  <label class="email-label" for="weddingDate">Wedding date (optional)</label>
+  <input
+    type="date"
+    id="weddingDate"
+    class="email-input"
+  />
 
-      <div class="hp-wrap" aria-hidden="true">
-        <label for="companyField">Company</label>
-        <input
-          type="text"
-          id="companyField"
-          name="company"
-          tabindex="-1"
-          autocomplete="off"
-        />
-      </div>
+  <div class="hp-wrap" aria-hidden="true">
+    <label for="companyField">Company</label>
+    <input
+      type="text"
+      id="companyField"
+      name="company"
+      tabindex="-1"
+      autocomplete="off"
+    />
+  </div>
 
-      <button type="submit" class="btn-pill btn-primary email-submit">
-        Join Our List
-      </button>
-    </form>
-
+  <button type="submit" class="btn-pill btn-primary email-submit">
+    Join Our List
+  </button>
+</form>
     <p id="emailSuccess" class="email-message hidden">
       You're in — we saved your info.
     </p>
