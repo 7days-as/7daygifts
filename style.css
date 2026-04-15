@@ -443,90 +443,50 @@ a{
 /* ---------- Product grid/cards ---------- */
 .product-grid{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:20px;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
 }
 
-.product-card{
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  background:linear-gradient(180deg,#fff,#F7F8FB);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px;
-  box-shadow:var(--shadow-soft);
-  overflow:hidden;
-  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+@media (max-width: 1200px){
+  .product-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
 }
 
-.product-card:hover{
-  transform:translateY(-2px);
-  box-shadow:var(--shadow);
-  border-color:#BFC7D2;
+@media (max-width: 768px){
+  .product-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+  }
+
+  .product-card{
+    padding:10px;
+  }
+
+  .product-title{
+    font-size:15px;
+    line-height:1.3;
+  }
+
+  .product-card-body{
+    min-height:72px;
+  }
 }
 
-.product-image-wrap{
-  position:relative;
-  width:100%;
-  aspect-ratio:1 / 1;
-  border-radius:var(--radius-sm);
-  overflow:hidden;
-  background:#fff;
-  border:1px solid rgba(0,0,0,0.06);
-  margin-bottom:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+@media (max-width: 420px){
+  .product-grid{
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
 
-.product-image{
-  width:100%;
-  height:100%;
-  display:block;
-  object-fit:contain;
-  object-position:center;
-  background:#fff;
-}
+  .product-title{
+    font-size:14px;
+  }
 
-.image-fallback{
-  display:none;
-  width:100%;
-  height:100%;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:18px;
-  color:var(--muted);
-  font-weight:700;
-  background:#F7F8FB;
+  .product-price{
+    font-size:14px;
+  }
 }
-
-.product-image-wrap.image-missing .image-fallback{
-  display:flex;
-}
-
-.product-card-body{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  min-height:88px;
-}
-
-.product-title{
-  margin:0;
-  font-size:16px;
-  line-height:1.35;
-  font-weight:800;
-  color:var(--text);
-}
-
-.product-price{
-  margin:0;
-  font-weight:900;
-  color:var(--text);
-}
-
 /* ---------- Heart ---------- */
 .heart{
   position:absolute;
