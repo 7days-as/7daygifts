@@ -1,6 +1,7 @@
 // ========= CONFIG =========
 const WISHLIST_KEY = "7DG_WISHLIST_LOCAL";
 const EMAIL_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVRgumxRdyeCgWhTqvo_tpM_x_hTMrCJQbrltrMr1hJ-LpnE5DLIXduDrrDlIVp2OT/exec";
+const CLICK_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyDvT1LzVG8eccyXwU7-7HkuQuq0oKyff0o9UYyq_bnJsLfJwyKCqSJUNnK5uGuTCdz/exec";
 const SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIP3mbNKwA1vi20Aufe7uKOBp-9HYV1kIot6FNnbZyPG7IT9xazlOqA9jii5b9lLuJBO6ydMNiyzSi/pub?gid=0&single=true&output=csv";
 
@@ -70,7 +71,22 @@ function parseCSVLine(line) {
   result.push(current);
   return result.map((item) => item.trim());
 }
+function logProductClick(productId) {
+  if (!productId || !CLICK_SCRIPT_URL) return;
 
+  fetch(CLICK_SCRIPT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      action: "logClick",
+      product_id: productId
+    })
+  }).catch((error) => {
+    console.error("Error logging click:", error);
+  });
+}
 // ========= MENU =========
 function initMenu() {
   const btn = $("menuToggle");
@@ -213,9 +229,14 @@ function wireCardButtons(container, sourceProducts) {
     card.addEventListener("click", (event) => {
       if (event.target.closest(".heart")) return;
 
-      const url = card.dataset.url;
-      if (url && url !== "#") {
-        window.open(url, "_blank", "noopener");
+      const id = card.dataset.id;
+      const product = sourceProducts.find((p) => p.id === id);
+      if (!product) return;
+
+      logProductClick(product.id);
+
+      if (product.url && product.url !== "#") {
+        window.open(product.url, "_blank", "noopener");
       }
     });
   });
@@ -233,7 +254,6 @@ function wireCardButtons(container, sourceProducts) {
     });
   });
 }
-
 // ========= HOME =========
 function renderHomeTrending(products) {
   const holder = $("home-trending");
