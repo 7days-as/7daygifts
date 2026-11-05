@@ -401,7 +401,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta name="theme-color" content="#ffffff" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "16";
+const ASSET_V = "17";
 
 function chanukahBand(ctx) {
   return ""; // Chanukah is not promoted on the site (Avrohom, Nov 4); the pages stay reachable by direct link

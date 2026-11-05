@@ -4,13 +4,13 @@
  * Deploy > New deployment > Web app: Execute as "Me", Who has access "Anyone".
  * Nothing written by visitors appears on the site until you approve it.
  */
-var NOTIFY_EMAIL = 'info@7daygifts.com';
+var NOTIFY_EMAIL = 'avramischwebel@gmail.com'; // comment emails go here (a config row "notify_email" overrides it)
 var SITE = 'https://7daygifts.com';
 var OCCASIONS = { wedding7: '7 days before the wedding', birthday: 'Birthday', anniversary: 'Anniversary', justbecause: 'Just because', any: 'Any occasion' };
 var TABS = {
-  ratings: ['updated_at', 'product_id', 'voter_hash', 'stars', 'created_at'],
-  votes: ['updated_at', 'product_id', 'voter_hash', 'occasions', 'created_at'],
-  comments: ['comment_id', 'received_at', 'product_id', 'product_title', 'name', 'comment', 'status', 'decided_at'],
+  ratings: ['updated_at', 'product_id', 'product_title', 'page_url', 'voter_hash', 'stars', 'created_at'],
+  votes: ['updated_at', 'product_id', 'product_title', 'page_url', 'voter_hash', 'occasions', 'created_at'],
+  comments: ['comment_id', 'received_at', 'product_id', 'product_title', 'page_url', 'name', 'comment', 'status', 'decided_at'],
   approved_comments: ['comment_id', 'approved_at', 'product_id', 'name', 'comment', 'comment_date'],
   config: ['key', 'value', 'note']
 };
@@ -123,7 +123,7 @@ function vote_(b) {
   if (!occ.length) return { ok: false, error: 'pick at least one occasion' };
   if (!allow_('v:' + voter, 40, 3600) || !allow_('v:all', 300, 60)) return { ok: false, error: 'Too many votes right now — try again a little later.' };
   var hash = hash_('voter:' + voter);
-  withLock_(function () { upsert_('votes', id, 'voter_hash', hash, { occasions: occ.join(',') }); });
+  withLock_(function () { upsert_('votes', id, 'voter_hash', hash, { occasions: occ.join(','), product_title: title_(b, id), page_url: pageUrl_(b.url) }); });
   CacheService.getScriptCache().remove('all');
   return summary_(id);
 }
@@ -135,7 +135,7 @@ function rate_(b) {
   if (voter.length < 8) return { ok: false, error: 'missing voter' };
   if (!allow_('r:' + voter, 40, 3600) || !allow_('r:all', 300, 60)) return { ok: false, error: 'Too many ratings right now — try again a little later.' };
   var hash = hash_('voter:' + voter);
-  withLock_(function () { upsert_('ratings', id, 'voter_hash', hash, { stars: stars }); });
+  withLock_(function () { upsert_('ratings', id, 'voter_hash', hash, { stars: stars, product_title: title_(b, id), page_url: pageUrl_(b.url) }); });
   CacheService.getScriptCache().remove('all');
   var s = summary_(id); s.mine = stars; return s;
 }
@@ -144,15 +144,15 @@ function comment_(b) {
   var id = cleanId_(b.product_id);
   var text = String(b.text || '').replace(/\s+$/, '').slice(0, 2000);
   var name = String(b.name || '').trim().slice(0, 60);
-  var title = String(b.title || id).trim().slice(0, 150);
+  var title = title_(b, id), url = pageUrl_(b.url);
   if (!id || text.trim().length < 2) return { ok: false, error: 'Please write a comment first.' };
   var key = 'c:' + String(b.voter || 'anon').slice(0, 64);
   if (!allow_(key, 8, 3600) || !allow_('c:all', 60, 3600)) return { ok: false, error: 'Too many comments right now — try again later.' };
   var cid = 'C' + new Date().getTime().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase();
   withLock_(function () {
-    sheet_('comments').appendRow([cid, new Date(), id, title, name, text, 'pending', '']);
+    appendObj_('comments', { comment_id: cid, received_at: new Date(), product_id: id, product_title: title, page_url: url, name: name, comment: text, status: 'pending', decided_at: '' });
   });
-  notify_(cid, id, title, name, text, String(b.url || ''));
+  notify_(cid, id, title, name, text, url);
   return { ok: true, received: true };
 }
 
@@ -188,17 +188,20 @@ function notify_(cid, id, title, name, text, url) {
   var base = ScriptApp.getService().getUrl();
   var approve = base + '?action=approve&id=' + encodeURIComponent(cid) + '&t=' + sign_(cid);
   var reject = base + '?action=reject&id=' + encodeURIComponent(cid) + '&t=' + sign_(cid);
-  var page = /^https:\/\/(www\.)?7daygifts(-preview\.sites\.tab\.bot|\.com)\//.test(url) ? url : SITE;
+  var page = pageUrl_(url) || SITE;
   var from = name || 'Someone (no name given)';
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var html = '<div style="font-family:Georgia,serif;font-size:16px;color:#222">' +
-    '<p><b>' + esc(from) + '</b> wrote about <a href="' + esc(page) + '">' + esc(title) + '</a> (' + esc(id) + '):</p>' +
+    '<p style="font-size:13px;letter-spacing:.08em;color:#a8863a;margin:0 0 4px">NEW PRIVATE COMMENT ON</p>' +
+    '<p style="font-size:20px;margin:0 0 4px"><a href="' + esc(page) + '" style="color:#1f3358;font-weight:bold">' + esc(title) + '</a></p>' +
+    '<p style="font-size:13px;color:#888;margin:0 0 14px"><a href="' + esc(page) + '" style="color:#888">' + esc(page) + '</a> &middot; ' + esc(id) + '</p>' +
+    '<p><b>' + esc(from) + '</b> wrote:</p>' +
     '<blockquote style="border-left:3px solid #c9a24a;margin:0;padding:8px 14px;background:#faf6ec">' + esc(text).replace(/\n/g, '<br>') + '</blockquote>' +
     '<p>It is <b>not</b> on the site. Choose:</p>' +
     '<p><a href="' + approve + '" style="background:#1f3a2e;color:#fff;padding:10px 18px;border-radius:20px;text-decoration:none">Approve — show it on the site</a></p>' +
     '<p><a href="' + reject + '" style="color:#888">Keep it private</a> (or just ignore this email)</p>' +
     '<p style="color:#888;font-size:13px">All comments are also in your Sheet "7daygifts Reviews &amp; Votes", tab comments.</p></div>';
-  MailApp.sendEmail({ to: cfg_('notify_email') || NOTIFY_EMAIL, cc: cfg_('notify_cc') || '', subject: 'New comment on ' + title, htmlBody: html, body: from + ' wrote about ' + title + ':\n\n' + text + '\n\nApprove: ' + approve + '\nKeep private: ' + reject, name: '7daygifts.com' });
+  MailApp.sendEmail({ to: cfg_('notify_email') || NOTIFY_EMAIL, cc: cfg_('notify_cc') || '', subject: 'New comment on ' + title, htmlBody: html, body: from + ' wrote about ' + title + ' (' + id + '):\n' + page + '\n\n' + text + '\n\nApprove: ' + approve + '\nKeep private: ' + reject, name: '7daygifts.com' });
 }
 
 /* ---------- helpers ---------- */
@@ -219,9 +222,31 @@ var PUBLIC_ADDRESS_SHEET = '19aHybi5Ar49VJ1kj09PTPCbLAkFIbReVX-MAicYT3jQ';
 var SHEET_ID_FALLBACK = '1UhpVuN0ews3D1hOAbY-a5V1TgPMpmXLNUXgkXc5Bx8c';
 function sheet_(name) {
   var b = book_(), sh = b.getSheetByName(name);
-  if (!sh) { sh = b.insertSheet(name); sh.appendRow(TABS[name]); sh.setFrozenRows(1); }
+  if (!sh) { sh = b.insertSheet(name); sh.appendRow(TABS[name]); sh.setFrozenRows(1); return sh; }
+  // Older tabs: add any newer columns (e.g. product_title, page_url) to the end of the header row.
+  var cache = CacheService.getScriptCache(), ck = 'hdr2:' + name;
+  if (!cache.get(ck)) {
+    var w = Math.max(sh.getLastColumn(), 1), head = sh.getRange(1, 1, 1, w).getValues()[0];
+    var missing = TABS[name].filter(function (h) { return head.indexOf(h) < 0; });
+    if (missing.length) {
+      var start = head.filter(String).length ? w + 1 : 1;
+      if (start === 1) missing = TABS[name];
+      sh.getRange(1, start, 1, missing.length).setValues([missing]);
+    }
+    cache.put(ck, '1', 21600);
+  }
   return sh;
 }
+function appendObj_(tab, obj) {
+  var sh = sheet_(tab), head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  sh.appendRow(head.map(function (h) { return h in obj ? obj[h] : ''; }));
+}
+// The gift page a visitor wrote from (only 7daygifts.com addresses are kept).
+function pageUrl_(u) {
+  u = String(u || '').trim().slice(0, 500);
+  return /^https:\/\/(www\.)?7daygifts(-preview\.sites\.tab\.bot|\.com)\/[^\s"<>]*$/.test(u) ? u : '';
+}
+function title_(b, id) { return String(b.title || id).replace(/\s+/g, ' ').trim().slice(0, 150); }
 function rows_(name) {
   var v = sheet_(name).getDataRange().getValues(), head = v[0] || [], out = [];
   for (var i = 1; i < v.length; i++) { var o = {}; for (var j = 0; j < head.length; j++) o[head[j]] = v[i][j]; out.push(o); }
@@ -234,7 +259,7 @@ function upsert_(tab, id, keyCol, keyVal, fields) {
     if (String(data[i][ci]) === id && String(data[i][ki]) === keyVal) {
       var rowv = data[i].slice();
       rowv[head.indexOf('updated_at')] = now;
-      for (var f in fields) rowv[head.indexOf(f)] = fields[f];
+      for (var f in fields) if (head.indexOf(f) >= 0) rowv[head.indexOf(f)] = fields[f];
       sh.getRange(i + 1, 1, 1, rowv.length).setValues([rowv]);
       return;
     }

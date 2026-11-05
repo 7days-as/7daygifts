@@ -1,9 +1,8 @@
 /* 7 Day Gifts — ratings, "what's it for" votes and private comments.
-   Talks to a Google Apps Script web app in Avrohom's Google account (Sheet "7daygifts Reviews & Votes").
-   Everything loads after the page; if the script is down the site works exactly as before. */
+   Loads after the page; if anything is unreachable the page works exactly as before. */
 (function () {
   "use strict";
-  var ENDPOINT = ""; // optional: the web app's /exec address. Left empty, it is read from the published address Sheet below.
+  var ENDPOINT = "";
   var ADDRESS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8bmnj0KRfb4knCetg9sozD_eUqYmuklbTIniwnR6ru62ntI9PTSBf4vO-MsIm9BDbyJcmHPeazvrY/pub?output=csv";
   var EP_RE = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
   var OCC = [["wedding7", "7 days before the wedding"], ["birthday", "Birthday"], ["anniversary", "Anniversary"], ["justbecause", "Just because"], ["any", "Any occasion"]];
@@ -81,7 +80,6 @@
     ".rv-cm input[type=text],.rv-cm textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1.5px solid var(--border,#D8D2C2);border-radius:12px;background:#fff;color:var(--text)}" +
     ".rv-cm textarea{min-height:96px;resize:vertical}" +
     ".rv-note{font-size:13px;color:var(--muted);margin:8px 0 0}" +
-    ".rv-preview{font-size:12.5px;color:var(--muted);margin:10px 0 0;font-style:italic}" +
     ".rv-mini{display:inline-flex;align-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--gold-text,#8A6630)}" +
     ".rv-mini .rv-st{color:var(--gold,#B48A4A)}" +
     ".rv-mini-occ{display:inline-block;padding:3px 9px;border-radius:999px;background:#EEF1F6;color:var(--primary);font-size:12px;font-weight:600}";
@@ -92,6 +90,13 @@
     var id = detail.getAttribute("data-id");
     var titleEl = detail.querySelector("h1");
     var title = titleEl ? titleEl.textContent.trim() : id;
+    var pageUrl = (function () {
+      var c = document.querySelector('link[rel="canonical"]'), h = c && c.href;
+      if (h && /^https:\/\/(www\.)?7daygifts\.com\//.test(h)) return h;
+      return location.href.split("#")[0];
+    })();
+    var page = { product_id: id, title: title, url: pageUrl };
+    function withPage(o) { for (var k in page) o[k] = page[k]; o.voter = voter(); return o; }
     var box = el("section", "rv"); box.setAttribute("aria-label", "Ratings and what this gift is for");
 
     var top = el("div", "rv-top");
@@ -150,7 +155,6 @@
     [l1, nameIn, l2, txt, hp, actC].forEach(function (n) { form.appendChild(n); });
     form.appendChild(el("p", "rv-note", "Comments come privately to 7daygifts and are read before anything is shown on the site."));
     det.appendChild(form); secC.appendChild(det); box.appendChild(secC);
-    endpoint().then(function (ep) { if (!ep) box.appendChild(el("p", "rv-preview", "Preview: saving turns on once it's connected to the 7daygifts Google Sheet.")); });
     form.addEventListener("submit", function (e) { e.preventDefault(); sendComment(); });
 
     var anchor = detail.querySelector(".product-actions");
@@ -187,31 +191,31 @@
         d.comments.forEach(function (c) { var q = el("blockquote", "rv-q", c.text); q.appendChild(el("cite", "", "— " + (c.name || "A 7daygifts reader") + (c.date ? ", " + c.date : ""))); quotes.appendChild(q); });
       }
     }
-    function fail(m, e) { m.className = "rv-msg err"; m.textContent = e && e.message === "off" ? "Thanks! (Preview — saving isn't switched on yet.)" : (e && e.text) || "Couldn't save right now. Please try again later."; if (e && e.message === "off") m.className = "rv-msg"; }
+    // Visitors only ever see a plain thanks; their choice is kept on this device either way.
+    function thanks(m, t) { m.className = "rv-msg"; m.textContent = t; }
     function sendRating(n) {
-      paintStars(n); msgR.className = "rv-msg"; msgR.textContent = "Saving…";
-      api("", { action: "rate", product_id: id, stars: n, voter: voter() }).then(function (d) {
-        if (!d || !d.ok) return fail(msgR, { text: d && d.error });
-        put("rv_r_" + id, n); msgR.textContent = ""; subR.textContent = "Thanks! You rated it " + n + "★. Tap to change."; render(d);
-      }).catch(function (e) { fail(msgR, e); paintStars(get("rv_r_" + id, 0)); });
+      paintStars(n); put("rv_r_" + id, n); thanks(msgR, "Thanks!"); subR.textContent = "You rated it " + n + "★. Tap to change.";
+      api("", withPage({ action: "rate", stars: n })).then(function (d) { if (d && d.ok) render(d); }).catch(function () {});
     }
     function sendVote() {
       var list = Object.keys(sel); if (!list.length) return;
-      saveBtn.disabled = true; msgV.className = "rv-msg"; msgV.textContent = "Saving…";
-      api("", { action: "vote", product_id: id, occasions: list, voter: voter() }).then(function (d) {
-        saveBtn.disabled = false;
-        if (!d || !d.ok) return fail(msgV, { text: d && d.error });
-        put("rv_v_" + id, list); saveBtn.textContent = "Update my vote"; msgV.textContent = "Thanks, your vote is in."; render(d);
-      }).catch(function (e) { saveBtn.disabled = false; fail(msgV, e); });
+      put("rv_v_" + id, list); saveBtn.textContent = "Update my vote"; thanks(msgV, "Thanks! We got it.");
+      api("", withPage({ action: "vote", occasions: list })).then(function (d) { if (d && d.ok) render(d); }).catch(function () {});
     }
     function sendComment() {
       var text = txt.value.trim(); if (text.length < 2) { msgC.className = "rv-msg err"; msgC.textContent = "Please write a comment first."; txt.focus(); return; }
+      var name = nameIn.value.trim();
       sendBtn.disabled = true; msgC.className = "rv-msg"; msgC.textContent = "Sending…";
-      api("", { action: "comment", product_id: id, title: title, url: location.href.split("#")[0], name: nameIn.value.trim(), text: text, voter: voter(), website: hp.value }).then(function (d) {
-        sendBtn.disabled = false;
-        if (!d || !d.ok) return fail(msgC, { text: d && d.error });
-        txt.value = ""; msgC.textContent = "Thank you! Your comment was sent privately.";
-      }).catch(function (e) { sendBtn.disabled = false; fail(msgC, e); });
+      function done() { sendBtn.disabled = false; txt.value = ""; thanks(msgC, "Thanks! We got it."); }
+      // If the comment can't be saved, hand it to the visitor's email app (addressed to info@, with this gift's link) so it isn't lost.
+      function viaEmail() {
+        location.href = "mailto:info@7daygifts.com?subject=" + encodeURIComponent("Comment on " + title) +
+          "&body=" + encodeURIComponent(text + "\n\n" + (name ? "— " + name + "\n" : "") + "Gift: " + title + "\n" + pageUrl);
+        done();
+      }
+      api("", withPage({ action: "comment", name: name, text: text, website: hp.value })).then(function (d) {
+        if (d && d.ok) done(); else viaEmail();
+      }).catch(viaEmail);
     }
   }
 
