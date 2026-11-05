@@ -977,3 +977,13 @@ html.menu-locked, html.menu-locked body{ overflow:hidden; }
 /* card type label (Funny, Sweet, Anniversary, Wedding, Just Because) */
 .card-label{display:inline-block;padding:2px 9px;border-radius:999px;background:#EEF2F8;color:#1F3358;border:1px solid #D5DEEC;font-size:12px;font-weight:600;line-height:1.5;letter-spacing:.01em}
 .product-card-body .card-label{align-self:flex-start;margin-bottom:6px}
+
+/* ---------- Contact page ---------- */
+.contact-card{max-width:620px;margin:0 auto;}
+.contact-direct{margin:18px 0 6px;}
+.contact-mail{display:inline-block;text-decoration:none;max-width:100%;overflow-wrap:anywhere;}
+.contact-or{color:var(--muted);margin:14px 0 8px;font-size:15px;}
+.contact-form select.email-input{appearance:auto;background:#fff;}
+.contact-form textarea.email-input{resize:vertical;min-height:120px;font:inherit;}
+.contact-phone{color:var(--muted);margin-top:16px;font-size:15px;}
+.email-submit:disabled{opacity:.6;cursor:wait;}

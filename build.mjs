@@ -266,7 +266,7 @@ const priceLabel = (p) => (p.band ? `${esc(p.band)} · ` : "") + esc(buyLabel(p)
 
 // ---------- page pieces ----------
 const nav = [
-  ["/index.html", "Home"], ["/gift-gallery.html", "Gift Gallery"], ["/guides/", "Gift Guides"], ["/wishlist.html", "Wish List"],
+  ["/index.html", "Home"], ["/gift-gallery.html", "Gift Gallery"], ["/guides/", "Gift Guides"], ["/wishlist.html", "Wish List"], ["/contact.html", "Contact Us"],
 ];
 
 function head({ title, description, canonical, image, type = "website", noindex = false, jsonld = [] }) {
@@ -296,9 +296,13 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=13" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
+  <link rel="stylesheet" href="/style.css?v=14" />
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#FBF6EA" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
 
@@ -343,19 +347,21 @@ function footer(ctx) {
       <div class="footer-links">
         <div><div class="footer-heading">Gift guides</div>${guides}</div>
         <div><div class="footer-heading">Who it's for</div><a href="/for/her.html">Gifts for her</a><a href="/for/him.html">Gifts for him</a><a href="/for/couples.html">Gifts for either of you</a></div>
+        <div><div class="footer-heading">Say hello</div><a href="/contact.html">Contact us</a><a href="mailto:info@7daygifts.com">info@7daygifts.com</a></div>
         <div><div class="footer-heading">Categories</div><div class="footer-cats">${cats}</div></div>
       </div>
       <div class="footer-inner">
         <span>© ${year} 7DayGifts.com</span>
         <span>Phone: <a href="tel:14753294438">475-329-4438</a></span>
         <span>Email: <a href="mailto:info@7daygifts.com">info@7daygifts.com</a></span>
+        <span><a href="/contact.html">Contact us</a></span>
       </div>
       <div class="footer-disclosure">
         When you buy through our links, we may earn a small commission. Prices and availability are set by Amazon (or by the shop, for Small Shops gifts) and can change, so check the current price before you buy.
       </div>
     </footer>
   </div>
-  <script src="/app.js?v=10"></script>
+  <script src="/app.js?v=11"></script>
 </body>
 </html>
 `;
@@ -403,7 +409,7 @@ const emailBlock = `
         <div class="email-capture-card">
           <h2 class="email-capture-title">Join Our List for Future Gift Ideas</h2>
           <p class="email-capture-text">
-            Get Chanukah gift ideas, Jewish holiday gift catalogs, anniversary reminders,
+            Get new gift ideas for the week before the wedding, anniversary reminders,
             and thoughtful inspiration for the moments when you do not want to feel stuck choosing a gift.
           </p>
           <form id="emailForm" class="email-form">
@@ -425,7 +431,7 @@ function pageHome(ctx) {
   const top = [...products].sort(byPop).slice(0, 7);
   const ld = [{ "@context": "https://schema.org", "@type": "WebSite", name: "7 Day Gifts", url: SITE + "/" },
     { "@context": "https://schema.org", "@type": "Organization", name: "7 Day Gifts", url: SITE + "/", logo: SITE + "/logo.png", email: "info@7daygifts.com", telephone: "+1-475-329-4438" }];
-  return head({ title: "7 Day Gifts · Gift Ideas for the 7 Days Before the Wedding", description: "Thoughtful gift ideas for the seven days before a Jewish wedding, for the chosson and the kallah, plus anniversary and Chanukah gifts for your spouse.", canonical: SITE + "/", jsonld: ld }) + header("Home") + `
+  return head({ title: "7 Day Gifts · Gift Ideas for the 7 Days Before the Wedding", description: "Thoughtful gift ideas for the seven days before a Jewish wedding, for the chosson and the kallah, plus anniversary gifts for your spouse.", canonical: SITE + "/", jsonld: ld }) + header("Home") + `
       <section class="section hero">
         <div class="hero-card">
           <h1 class="hero-title">Thoughtful 7-day wedding gift ideas for the meaningful days leading up to a wedding — and beyond.</h1>
@@ -605,7 +611,7 @@ function pageCategory(ctx, c) {
 function pageWho(ctx, key) {
   const w = WHO[key];
   const list = ctx.products.filter((p) => (key === "all" ? p.gender === "all" : p.gender === key || p.gender === "all")).sort((a, b) => (a.gender === key ? 0 : 1) - (b.gender === key ? 0 : 1) || byPop(a, b));
-  const guideLinks = key === "her" ? ["gifts-for-the-kallah", "chanukah-gifts-for-wife-or-husband"] : key === "him" ? ["gifts-for-the-chosson", "chanukah-gifts-for-wife-or-husband"] : ["7-day-gift-ideas-before-the-wedding", "chanukah-gifts-for-wife-or-husband"];
+  const guideLinks = key === "her" ? ["gifts-for-the-kallah", "7-day-gift-ideas-before-the-wedding"] : key === "him" ? ["gifts-for-the-chosson", "7-day-gift-ideas-before-the-wedding"] : ["7-day-gift-ideas-before-the-wedding", "gifts-for-the-kallah", "gifts-for-the-chosson"];
   const gl = ctx.guides.filter((g) => guideLinks.includes(g.slug)).map((g) => `<a class="chip" href="/guides/${g.slug}.html">${esc(shortGuide(g.title))}</a>`).join("");
   return pageList(ctx, {
     h1: w.h1, title: `${w.title} | 7 Day Gifts`, description: clip(`${w.blurb} ${list.length} hand-picked ideas.`, 158),
@@ -627,7 +633,7 @@ function pageGuide(ctx, g) {
   const ld = { "@context": "https://schema.org", "@type": "Article", headline: g.title, description: g.description, url: `${SITE}/guides/${g.slug}.html`,
     image: all[0]?.image ? [all[0].image] : undefined, publisher: { "@type": "Organization", name: "7 Day Gifts", logo: { "@type": "ImageObject", url: SITE + "/logo.png" } }, author: { "@type": "Organization", name: "7 Day Gifts" } };
   const others = ctx.guides.filter((o) => o.slug !== g.slug).map((o) => `<a class="chip" href="/guides/${o.slug}.html">${esc(shortGuide(o.title))}</a>`).join("");
-  return head({ title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", jsonld: [ld, bc.ld] }) + header("Gift Guides") + `
+  return head({ title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, jsonld: [ld, bc.ld] }) + header("Gift Guides") + `
       <section class="section guide">
         ${bc.html}
         <h1 class="guide-title">${esc(g.title)}</h1>
@@ -641,12 +647,44 @@ function pageGuide(ctx, g) {
 
 function pageGuides(ctx) {
   const bc = crumbs([["/index.html", "Home"], ["/guides/", "Gift Guides"]]);
-  return head({ title: "Gift Guides for Jewish Weddings, Anniversaries & Chanukah | 7 Day Gifts", description: "Practical gift guides for the seven days before the wedding, gifts for the chosson and the kallah, and Chanukah gifts for your spouse.", canonical: SITE + "/guides/", jsonld: [bc.ld] }) + header("Gift Guides") + `
+  return head({ title: "Gift Guides for the 7 Days Before the Wedding | 7 Day Gifts", description: "Practical gift guides for the seven days before the wedding, and gifts for the chosson and the kallah.", canonical: SITE + "/guides/", jsonld: [bc.ld] }) + header("Gift Guides") + `
       <section class="section">
         ${bc.html}
         ${sectionHeader("Gift Guides", "Short, practical guides to help you choose.", "h1")}
         <div class="guide-list">
           ${ctx.guides.map((g) => guideCard(ctx, g)).join("\n          ")}
+        </div>
+      </section>` + footer(ctx);
+}
+
+function pageContact(ctx) {
+  const bc = crumbs([["/index.html", "Home"], ["/contact.html", "Contact Us"]]);
+  const ld = { "@context": "https://schema.org", "@type": "ContactPage", name: "Contact 7 Day Gifts", url: SITE + "/contact.html",
+    mainEntity: { "@type": "Organization", name: "7 Day Gifts", url: SITE + "/", email: "info@7daygifts.com", telephone: "+1-475-329-4438" } };
+  return head({ title: "Contact Us | 7 Day Gifts", description: "Have a gift idea, a question, or feedback? We'd love to hear from you. Email info@7daygifts.com.", canonical: SITE + "/contact.html", jsonld: [ld, bc.ld] }) + header("Contact Us") + `
+      <section class="section contact-page">
+        ${bc.html}
+        <div class="email-capture-card contact-card">
+          <h1 class="email-capture-title">Contact Us</h1>
+          <p class="email-capture-text">Have a gift idea, a question, or feedback? We'd love to hear from you.</p>
+          <p class="contact-direct"><a class="btn-pill btn-primary contact-mail" href="mailto:info@7daygifts.com?subject=Hello%20from%207daygifts.com">Email info@7daygifts.com</a></p>
+          <p class="contact-or">or write it here, and we'll open your email app with your note ready to send:</p>
+          <form id="contactForm" class="email-form contact-form">
+            <label class="email-label" for="contactName">Your name (optional)</label>
+            <input type="text" id="contactName" name="name" class="email-input" autocomplete="name" />
+            <label class="email-label" for="contactTopic">What's it about?</label>
+            <select id="contactTopic" name="topic" class="email-input">
+              <option>A gift idea</option>
+              <option>A question</option>
+              <option>Feedback</option>
+              <option>Something else</option>
+            </select>
+            <label class="email-label" for="contactMessage">Message</label>
+            <textarea id="contactMessage" name="message" class="email-input contact-message" rows="5" required></textarea>
+            <button type="submit" class="btn-pill btn-primary email-submit">Write the email</button>
+          </form>
+          <p id="contactDone" class="email-message hidden">Your email app should open with your note. If it didn't, just email us at <a href="mailto:info@7daygifts.com">info@7daygifts.com</a>.</p>
+          <p class="contact-phone">Prefer the phone? Call <a href="tel:14753294438">475-329-4438</a>.</p>
         </div>
       </section>` + footer(ctx);
 }
@@ -678,7 +716,10 @@ async function main() {
   const guideFill = fillGuides(guides, products);
   const categories = [...catMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
     .map(([name, list]) => ({ name, slug: slugify(name), products: list, indexable: list.length >= 2 || (name === SMALL_SHOPS && list.length >= 1) }));
-  const ctx = { products, categories, guides, catIntros };
+  // a guide marked "hidden" in data/guides.json is still built (reachable by its direct link, e.g. for an email)
+  // but is not linked anywhere on the site, is noindex and stays out of the sitemap
+  const publicGuides = guides.filter((g) => !g.hidden);
+  const ctx = { products, categories, guides: publicGuides, catIntros };
 
   // generated folders are rebuilt from scratch so removed products disappear
   for (const dir of ["gifts", "category", "for", "guides"]) await rm(path.join(OUT, dir), { recursive: true, force: true });
@@ -688,9 +729,10 @@ async function main() {
   await add("index.html", pageHome(ctx)); urls[urls.length - 1] = "";
   await add("gift-gallery.html", pageGallery(ctx));
   await add("wishlist.html", pageWishlist(ctx), false);
+  await add("contact.html", pageContact(ctx));
   await add("404.html", page404(ctx), false);
   await add("guides/index.html", pageGuides(ctx)); urls[urls.length - 1] = "guides/";
-  for (const g of guides) await add(`guides/${g.slug}.html`, pageGuide(ctx, g));
+  for (const g of guides) await add(`guides/${g.slug}.html`, pageGuide(ctx, g), !g.hidden);
   for (const k of ["her", "him", "all"]) await add(`for/${WHO[k].slug}.html`, pageWho(ctx, k));
   for (const c of categories) await add(`category/${c.slug}.html`, pageCategory(ctx, c), c.indexable);
   const movedPages = await writeCategoryRedirects(categories);
@@ -703,7 +745,7 @@ async function main() {
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 
   if (PREVIEW) {
-    for (const f of ["style.css", "app.js", "logo.png", "favicon.ico", "hero.jpg"]) if (existsSync(path.join(ROOT, f))) await copyFile(path.join(ROOT, f), path.join(OUT, f));
+    for (const f of ["style.css", "app.js", "logo.png", "favicon.ico", "favicon-16x16.png", "favicon-32x32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "site.webmanifest", "hero.jpg"]) if (existsSync(path.join(ROOT, f))) await copyFile(path.join(ROOT, f), path.join(OUT, f));
   } else {
     // keep product URLs stable even if a title changes in the sheet later
     const sorted = Object.fromEntries(Object.entries(slugLock).sort(([a], [b]) => a.localeCompare(b)));
