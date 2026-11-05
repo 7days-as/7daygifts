@@ -36,11 +36,35 @@ function initMenu() {
   const btn = $("menuToggle");
   const menu = $("mobileMenu");
   if (!btn || !menu) return;
-  btn.addEventListener("click", () => menu.classList.toggle("open"));
-  menu.addEventListener("click", (event) => {
-    if (event.target === menu) menu.classList.remove("open");
-  });
-  menu.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => menu.classList.remove("open")));
+  let overlay = $("menuOverlay");
+  if (!overlay) { overlay = document.createElement("div"); overlay.id = "menuOverlay"; overlay.className = "menu-overlay"; overlay.hidden = true; menu.before(overlay); }
+  const closeBtn = $("menuClose");
+  let hideTimer;
+  function open() {
+    clearTimeout(hideTimer);
+    overlay.hidden = false;
+    requestAnimationFrame(() => { overlay.classList.add("show"); menu.classList.add("open"); });
+    menu.setAttribute("aria-hidden", "false");
+    btn.setAttribute("aria-expanded", "true");
+    document.documentElement.classList.add("menu-locked");
+  }
+  function close() {
+    menu.classList.remove("open");
+    overlay.classList.remove("show");
+    menu.setAttribute("aria-hidden", "true");
+    btn.setAttribute("aria-expanded", "false");
+    document.documentElement.classList.remove("menu-locked");
+    hideTimer = setTimeout(() => { overlay.hidden = true; }, 300);
+  }
+  btn.addEventListener("click", () => (menu.classList.contains("open") ? close() : open()));
+  overlay.addEventListener("click", close);
+  closeBtn?.addEventListener("click", close);
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && menu.classList.contains("open")) close(); });
+  menu.querySelectorAll("a").forEach((link) => link.addEventListener("click", close));
+  // swipe right to close
+  let x0 = null;
+  menu.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+  menu.addEventListener("touchend", (e) => { if (x0 !== null && e.changedTouches[0].clientX - x0 > 60) close(); x0 = null; }, { passive: true });
 }
 
 // ========= WISHLIST =========
@@ -125,7 +149,7 @@ function renderCard(p) {
       <h3 class="product-title">${title}</h3>
     </a>
     <div class="product-card-body">
-      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="sponsored nofollow noopener" data-id="${escapeHtml(p.id)}">Check price on Amazon</a>
+      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="sponsored nofollow noopener" data-id="${escapeHtml(p.id)}">${p.band ? escapeHtml(p.band) + " · " : ""}Check price on Amazon</a>
     </div>
   </article>`;
 }
@@ -153,6 +177,7 @@ function initGallery() {
   const genderWrap = $("genderPills");
   const sortRow = document.querySelector(".sort-row");
   const categoryFilter = $("categoryFilter");
+  const budgetFilter = $("budgetFilter");
   const empty = $("galleryEmpty");
 
   const params = new URLSearchParams(location.search);
@@ -161,12 +186,15 @@ function initGallery() {
     genderWrap.querySelectorAll("[data-gender]").forEach((b) => b.classList.toggle("active", b.dataset.gender === startGender));
   }
   const startCat = params.get("category");
+  const startBudget = params.get("budget");
+  if (startBudget && budgetFilter && [...budgetFilter.options].some((o) => o.value === startBudget)) budgetFilter.value = startBudget;
   if (startCat && categoryFilter && [...categoryFilter.options].some((o) => o.value === startCat)) categoryFilter.value = startCat;
 
   function apply() {
     const gender = genderWrap?.querySelector("[data-gender].active")?.dataset.gender || "all";
     const sort = sortRow?.querySelector(".sort-btn.active")?.dataset.sort || "popular";
     const category = categoryFilter?.value || "all";
+    const budget = budgetFilter?.value || "all";
     const sorted = [...cards].sort((a, b) =>
       sort === "recent"
         ? Number(b.dataset.order) - Number(a.dataset.order)
@@ -175,7 +203,8 @@ function initGallery() {
     sorted.forEach((card) => {
       const okGender = gender === "all" || card.dataset.gender === gender || card.dataset.gender === "all";
       const okCat = category === "all" || card.dataset.category === category;
-      card.hidden = !(okGender && okCat);
+      const okBudget = budget === "all" || card.dataset.band === budget;
+      card.hidden = !(okGender && okCat && okBudget);
       if (!card.hidden) shown++;
       grid.appendChild(card);
     });
@@ -197,6 +226,7 @@ function initGallery() {
     apply();
   });
   categoryFilter?.addEventListener("change", apply);
+  budgetFilter?.addEventListener("change", apply);
   apply();
 }
 
