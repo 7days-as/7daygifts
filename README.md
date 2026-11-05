@@ -37,3 +37,8 @@ A row with `amazon_enabled` = FALSE, `amazon_asin` empty and `my_url` = the prod
 
 ## Categories and card labels
 The site uses 9 categories: Cards, Gift Wrap, Accessories, Clothing, Home & Kitchen, Gadgets, Hobbies & Games, Travel & Outdoors, Beauty & Fragrance (plus Small Shops, automatic). Older names typed in the Sheet (Kitchen, Guitar, Wrapping Paper, Anniversary Cards…) are mapped to these by `CATEGORY_MAP` in build.mjs. Cards get a small badge from the `card_label` column: Funny, Sweet, Anniversary, Wedding or Just Because. Old category addresses 301 to the new pages (`vercel.json`), and the build also leaves a small redirect page at each old address.
+
+## Ratings, "what's it for" votes and private comments (`reviews.js`)
+Product pages get star ratings (no sign-in; one per browser, can be changed), an occasion vote (7 days before the wedding, Birthday, Anniversary, Just because, or Any occasion — "Most people say: …" shows once 3 people have voted) and a "Send us a private comment" form. Cards show small stars and the top occasion once there is data.
+Everything is stored in Avrohom's Google Sheet "7daygifts Reviews & Votes" (tabs ratings, votes, comments, approved_comments, config) through a Google Apps Script web app in that Sheet (code: `reviews-backend/Code.gs`). Comments are emailed to info@7daygifts.com with an Approve link; nothing written by visitors shows on the site until it is approved (approved ones are in the approved_comments tab — delete a row there to take one down).
+To switch it on: put the web app's /exec address (the Sheet's config tab, `web_app_url`) into `ENDPOINT` at the top of `reviews.js`. With `ENDPOINT` empty, or if the script is down, the site works as before and the widget only shows a preview note.

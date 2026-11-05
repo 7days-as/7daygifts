@@ -471,6 +471,7 @@ function footer(ctx) {
     </footer>
   </div>
   <script src="/app.js?v=${ASSET_V}"></script>
+  <script src="/reviews.js?v=${ASSET_V}" defer></script>
 </body>
 </html>
 `;
@@ -1050,7 +1051,7 @@ async function main() {
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 
   if (PREVIEW) {
-    for (const f of ["style.css", "app.js", "logo.png", "logo-sm.png", "favicon.ico", "hero.jpg", "hero-1600.jpg", "hero-800.jpg"]) if (existsSync(path.join(ROOT, f))) await copyFile(path.join(ROOT, f), path.join(OUT, f));
+    for (const f of ["style.css", "app.js", "reviews.js", "logo.png", "logo-sm.png", "favicon.ico", "hero.jpg", "hero-1600.jpg", "hero-800.jpg"]) if (existsSync(path.join(ROOT, f))) await copyFile(path.join(ROOT, f), path.join(OUT, f));
   } else {
     // keep product URLs stable even if a title changes in the sheet later
     const sorted = Object.fromEntries(Object.entries(slugLock).sort(([a], [b]) => a.localeCompare(b)));
