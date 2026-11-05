@@ -401,7 +401,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta name="theme-color" content="#ffffff" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "15";
+const ASSET_V = "16";
 
 function chanukahBand(ctx) {
   return ""; // Chanukah is not promoted on the site (Avrohom, Nov 4); the pages stay reachable by direct link
@@ -632,24 +632,46 @@ function reelCard(p, { isNew = false, eager = false } = {}) {
             <span class="reel-name">${esc(p.name)}</span>
           </a>`;
 }
+// Photo cards framing the headline: left/top group and right/bottom group.
+function collageCard(p, i, { isNew = false } = {}) {
+  return `<a class="hc hc-${i}" href="/gifts/${p.slug}.html" aria-label="${esc(p.name)}"><img src="${esc(sizedImage(p.image, 400))}" alt="" ${i < 4 ? 'fetchpriority="high"' : ""} decoding="async" width="200" height="200" onerror="this.closest('.hc').remove()" />${isNew ? '<span class="hc-new">New</span>' : ""}</a>`;
+}
 function heroBlock(ctx, n) {
   const pool = ctx.mainGifts.filter((p) => p.image && !isCardOrWrap(p) && !p.side);
-  const top = [...pool].sort(byPop).slice(0, 8);
-  const fresh = [...pool].filter((p) => !top.includes(p)).sort((a, b) => b.order - a.order).slice(0, 8);
-  const s = ctx.season;
-  return `      <section class="hero hero-gifts">
+  const loved = [...pool].sort(byPop).slice(0, 6);
+  const newest = [...pool].filter((p) => !loved.includes(p)).sort((a, b) => b.order - a.order).slice(0, 4);
+  // interleave so each side gets loved + new gifts
+  const picks = [loved[0], newest[0], loved[1], loved[2], newest[1], loved[3], newest[2], loved[4], loved[5], newest[3]].filter(Boolean);
+  const isNewPick = (p) => newest.includes(p);
+  const sideA = picks.slice(0, 5), sideB = picks.slice(5, 10);
+  const used = new Set(picks);
+  const rest = pool.filter((p) => !used.has(p));
+  const top = [...rest].sort(byPop).slice(0, 8);
+  const fresh = [...rest].filter((p) => !top.includes(p)).sort((a, b) => b.order - a.order).slice(0, 8);
+  return `      <section class="hero hero-gifts hero-collage">
         <span class="hero-glow hero-glow-1" aria-hidden="true"></span><span class="hero-glow hero-glow-2" aria-hidden="true"></span>
-        <div class="hero-inner">
-          <div class="hero-chips">
-            <a class="hchip hchip-new" href="/gift-gallery.html?sort=recent"><span class="hchip-dot" aria-hidden="true"></span>New this week</a>
-            ${false && s && s.start ? `<a class="hchip hchip-chanukah seasonal" href="/chanukah/">${ICON.menorah}<span>Chanukah · <span data-chanukah-countdown>begins ${esc(new Date(s.start + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }))}</span></span></a>` : ""}
+        <div class="hero-stage">
+          <div class="hc-group hc-a" aria-label="Most-loved gifts">
+            ${sideA.map((p, i) => collageCard(p, i + 1, { isNew: isNewPick(p) })).join("\n            ")}
           </div>
-          <h1 class="hero-title">Seven days.<br /><em>Seven thoughtful gifts.</em></h1>
-          <p class="hero-subtitle">Hand-picked gifts for the chosson, the kallah, and every anniversary after.</p>
+          <div class="hero-inner hero-center">
+            <div class="hero-chips">
+              <a class="hchip hchip-new" href="/gift-gallery.html?sort=recent"><span class="hchip-dot" aria-hidden="true"></span>New this week</a>
+            </div>
+            <h1 class="hero-title">Seven days.<br /><em>Seven thoughtful gifts.</em></h1>
+            <p class="hero-subtitle">Hand-picked gifts for the chosson, the kallah, and every anniversary after.</p>
+            <div class="hero-actions">
+              <a class="btn-pill btn-primary btn-big" href="/gift-gallery.html">Browse all ${n} gifts${ICON.arrow}</a>
+              <a class="btn-pill btn-light btn-big" href="#finder">Find a gift in 3 taps</a>
+            </div>
+          </div>
+          <div class="hc-group hc-b" aria-label="More gift ideas">
+            ${sideB.map((p, i) => collageCard(p, i + 1, { isNew: isNewPick(p) })).join("\n            ")}
+          </div>
         </div>
         <div class="gift-reel" data-reel data-speed="0.32" aria-label="Most-loved gifts">
           <div class="reel-track">
-          ${top.map((p, i) => reelCard(p, { eager: i < 4 })).join("\n          ")}
+          ${top.map((p) => reelCard(p)).join("\n          ")}
           </div>
         </div>
         ${fresh.length >= 4 ? `<div class="gift-reel gift-reel-sm" data-reel data-speed="0.24" data-dir="-1" aria-label="New gifts">
@@ -657,12 +679,6 @@ function heroBlock(ctx, n) {
           ${fresh.map((p) => reelCard(p, { isNew: true })).join("\n          ")}
           </div>
         </div>` : ""}
-        <div class="hero-inner hero-cta">
-          <div class="hero-actions">
-            <a class="btn-pill btn-primary btn-big" href="/gift-gallery.html">Browse all ${n} gifts${ICON.arrow}</a>
-            <a class="btn-pill btn-light btn-big" href="#finder">Find a gift in 3 taps</a>
-          </div>
-        </div>
       </section>
 `;
 }

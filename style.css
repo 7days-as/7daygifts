@@ -471,6 +471,68 @@ html.menu-locked,html.menu-locked body{overflow:hidden}
 }
 @media (prefers-reduced-motion:reduce){.hchip-dot{animation:none}.reel-img{transition:none}}
 
+/* ---------- homepage hero: gift photos framing the headline ---------- */
+.hero-stage{position:relative;z-index:2;max-width:1260px;margin:0 auto}
+.hero-collage .hero-center{padding:0 16px}
+.hero-collage .hero-actions{margin-top:2px}
+.hc-group{position:relative;z-index:2}
+.hc{--r:0deg;--y:0px;--d:0s;position:relative;display:block;flex:0 0 auto;width:var(--s,82px);aspect-ratio:1;border-radius:18px;background:#fff;border:1px solid #EFE4CC;
+  box-shadow:0 10px 24px rgba(31,51,88,.12),0 2px 6px rgba(31,51,88,.06);overflow:hidden;transform:translateY(var(--y)) rotate(var(--r));
+  animation:hcFloat 7s ease-in-out var(--d) infinite;transition:box-shadow .25s ease;will-change:transform}
+.hc img{width:100%;height:100%;object-fit:contain;padding:9%;background:#fff;display:block}
+.hc:hover,.hc:focus-visible{box-shadow:0 18px 34px rgba(31,51,88,.18),0 0 0 2px var(--gold-soft);animation-play-state:paused;z-index:5}
+.hc-new{position:absolute;left:6px;top:6px;padding:1px 7px;border-radius:999px;background:var(--gold);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.6}
+@keyframes hcFloat{0%,100%{transform:translateY(var(--y)) rotate(var(--r))}50%{transform:translateY(calc(var(--y) - 7px)) rotate(var(--r))}}
+
+/* phone + tablet: an arch of photos above the headline, a second one below the buttons */
+@media (max-width:899px){
+  .hero.hero-collage{padding:12px 0 14px}
+  .hc-group{display:flex;justify-content:center;gap:8px;padding:0 12px}
+  .hc-a{margin:4px 0 14px}
+  .hc-b{margin:22px 0 14px}
+  .hc{--s:min(21vw,84px)}
+  .hc-5{display:none}
+  .hc-a .hc-1{--r:-8deg;--y:9px;--d:-1s}.hc-a .hc-2{--r:-3deg;--y:0px;--d:-3.5s}.hc-a .hc-3{--r:3deg;--y:0px;--d:-2s}.hc-a .hc-4{--r:8deg;--y:9px;--d:-5s}
+  .hc-b .hc-1{--r:7deg;--y:-8px;--d:-4s}.hc-b .hc-2{--r:2deg;--y:0px;--d:-.5s}.hc-b .hc-3{--r:-3deg;--y:0px;--d:-6s}.hc-b .hc-4{--r:-7deg;--y:-8px;--d:-2.5s}
+  .hero-collage .hero-chips{margin-bottom:8px}
+  .hero-collage .hero-title{font-size:clamp(30px,8.4vw,44px)}
+  .hero-collage .hero-subtitle{margin-bottom:12px}
+}
+@media (min-width:600px) and (max-width:899px){
+  .hc{--s:96px}.hc-group{gap:14px}
+  .hc-5{display:block}
+  .hc-a .hc-5{--r:-5deg;--y:4px;--d:-2.8s}.hc-b .hc-5{--r:5deg;--y:-4px;--d:-1.6s}
+}
+
+/* desktop: a floating collage on both sides of the headline */
+@media (min-width:900px){
+  .hero.hero-collage{padding:30px 0 26px}
+  .hero-stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,580px) minmax(0,1fr);align-items:center;min-height:clamp(470px,40vw,560px);padding:0 12px}
+  .hc-group{height:clamp(450px,38vw,540px)}
+  .hc{position:absolute;--s:clamp(104px,11vw,176px)}
+  .hc-a .hc-1{left:10%;top:3%;--r:-7deg;--d:-1s}
+  .hc-a .hc-2{left:56%;top:0%;--s:clamp(84px,8.4vw,132px);--r:5deg;--d:-3.6s}
+  .hc-a .hc-3{left:34%;top:35%;--r:-2deg;--d:-2.2s}
+  .hc-a .hc-4{left:2%;top:63%;--r:6deg;--d:-5.1s}
+  .hc-a .hc-5{left:55%;top:72%;--s:clamp(84px,8.4vw,132px);--r:-5deg;--d:-.4s}
+  .hc-b .hc-1{right:10%;top:3%;--r:7deg;--d:-4.2s}
+  .hc-b .hc-2{right:56%;top:0%;--s:clamp(84px,8.4vw,132px);--r:-5deg;--d:-1.8s}
+  .hc-b .hc-3{right:34%;top:35%;--r:2deg;--d:-6s}
+  .hc-b .hc-4{right:2%;top:63%;--r:-6deg;--d:-2.9s}
+  .hc-b .hc-5{right:55%;top:72%;--s:clamp(84px,8.4vw,132px);--r:5deg;--d:-3.3s}
+  .hc{border-radius:22px}
+  .hc-new{left:9px;top:9px;font-size:10.5px;padding:1px 8px}
+  .hero-collage .hero-center{padding:0 8px}
+  .hero-collage .hero-title{font-size:clamp(40px,4.4vw,60px);margin-bottom:12px}
+  .hero-collage .hero-subtitle{margin-bottom:22px}
+  .hero-collage .gift-reel{margin-top:6px}
+}
+@media (min-width:900px) and (max-width:1100px){
+  .hc-a .hc-2,.hc-b .hc-2{display:none}
+  .hc-a .hc-1{left:18%}.hc-b .hc-1{right:18%}
+}
+@media (prefers-reduced-motion:reduce){.hc{animation:none;will-change:auto}}
+
 /* keep the gallery filters inside the phone screen (the pill rows swipe) */
 .filters{grid-template-columns:minmax(0,1fr)}
 .filters > *{min-width:0}
