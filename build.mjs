@@ -285,7 +285,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "10";
+const ASSET_V = "12";
 
 function chanukahBand(ctx) {
   const s = ctx.season;
@@ -299,7 +299,7 @@ function chanukahBand(ctx) {
 
 function header(active, ctx) {
   const links = nav.map(([href, label, cls = ""]) => `<a href="${href}" class="nav-link${label === active ? " active" : ""}${cls ? " " + cls : ""}">${label}</a>`).join("\n          ");
-  const mlinks = nav.map(([href, label, cls = ""]) => `<a href="${href}"${cls ? ` class="${cls}"` : ""}>${label}${ICON.arrow}</a>`).join("\n        ");
+  const mlinks = nav.map(([href, label, cls = ""]) => `<a href="${href}" class="mobile-link${label === active ? " active" : ""}${cls ? " " + cls : ""}"${label === active ? ' aria-current="page"' : ""}><span>${label}</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>`).join("\n        ");
   return `
 <body>
   <a class="skip-link" href="#main">Skip to content</a>

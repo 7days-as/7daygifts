@@ -94,9 +94,16 @@ html.menu-locked,html.menu-locked body{overflow:hidden}
 .mobile-menu.open{transform:none;visibility:visible}
 .mobile-menu-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .mobile-menu-title{font-family:var(--serif);font-size:18px;color:var(--primary);font-weight:600}
-.menu-close{width:36px;height:36px;border:0;background:var(--cream-2);border-radius:50%;font-size:22px;line-height:1;color:var(--primary);cursor:pointer}
-.mobile-menu-links{display:flex;flex-direction:column;margin:6px 0 20px}
-.mobile-menu-links a{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid var(--border-soft);text-decoration:none;color:var(--primary);font-size:15px;font-weight:500}
+.menu-close{width:36px;height:36px;border:0;background:transparent;border-radius:0;font-size:24px;line-height:1;color:var(--primary);cursor:pointer}
+.mobile-menu-links{display:flex;flex-direction:column;margin:8px 0 14px}
+.mobile-menu a.mobile-link{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 12px;margin:0 0 8px;background:#fff;border:1px solid var(--border-soft);border-radius:12px;box-shadow:0 1px 2px rgba(31,51,88,.06);font-weight:600;font-size:15px;color:var(--primary);text-decoration:none;transition:background .12s ease,transform .08s ease,border-color .12s ease;-webkit-tap-highlight-color:transparent}
+.mobile-menu a.mobile-link .mobile-link-chev{font-size:22px;line-height:1;color:var(--gold);margin-left:8px}
+.mobile-menu a.mobile-link:hover{background:#FAF6EC}
+.mobile-menu a.mobile-link:active{background:#F1EBDD;transform:scale(.98)}
+.mobile-menu a.mobile-link.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.mobile-menu a.mobile-link.active .mobile-link-chev{color:#F3D9A0}
+.mobile-menu a.mobile-link.seasonal{color:var(--chanukah-2);border-color:#C6D3EC}
+.mobile-menu a.mobile-link.nav-chanukah::before{display:none}
 .mobile-menu .btn-block{font-size:14px;padding:12px 10px}
 .mobile-menu-links a svg{width:16px;height:16px;color:var(--gold)}
 .mobile-menu-links a.seasonal{color:var(--chanukah-2)}
