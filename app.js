@@ -89,6 +89,8 @@ function productFromCard(id) {
     title: card.querySelector(".product-title, .product-detail-title")?.textContent.trim() || "",
     image: card.querySelector(".product-image")?.getAttribute("src") || "",
     url: card.querySelector(".amazon-link")?.getAttribute("href") || "#",
+    shop: (() => { const s = card.querySelector(".shop-link"); try { return s ? new URL(s.href).hostname.replace(/^www\./, "") : ""; } catch (e) { return ""; } })(),
+    rel: card.querySelector(".amazon-link")?.getAttribute("rel") || "",
     slug: (link.match(/\/gifts\/([^/]+)\.html/) || [])[1] || "",
     category: card.dataset.category || "",
     gender: card.dataset.gender || "all"
@@ -150,7 +152,7 @@ function renderCard(p) {
       <h3 class="product-title">${title}</h3>
     </a>
     <div class="product-card-body">
-      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="sponsored nofollow noopener" data-id="${escapeHtml(p.id)}">${p.band ? escapeHtml(p.band) + " · " : ""}Check price on Amazon</a>
+      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="${escapeHtml(p.rel || "sponsored nofollow noopener")}" data-id="${escapeHtml(p.id)}">${p.band ? escapeHtml(p.band) + " · " : ""}${p.shop ? "Shop at " + escapeHtml(p.shop) : "Check price on Amazon"}</a>
     </div>
   </article>`;
 }
@@ -203,7 +205,7 @@ function initGallery() {
     let shown = 0;
     sorted.forEach((card) => {
       const okGender = gender === "all" || card.dataset.gender === gender || card.dataset.gender === "all";
-      const okCat = category === "all" || card.dataset.category === category;
+      const okCat = category === "all" || card.dataset.category === category || (category === "Small Shops" && card.dataset.shop === "1");
       const okBudget = budget === "all" || card.dataset.band === budget;
       card.hidden = !(okGender && okCat && okBudget);
       if (!card.hidden) shown++;

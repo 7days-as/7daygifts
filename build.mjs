@@ -82,6 +82,71 @@ function shortName(title) {
   return t.length > 70 ? clip(t, 70) : t;
 }
 
+// ---------- shops: products that are not on Amazon ----------
+// A Sheet row with amazon_enabled = FALSE and a my_url that is not an Amazon link links straight to
+// that shop: the button says "Shop at <domain>", and the product also appears under "Small Shops".
+const SMALL_SHOPS = "Small Shops";
+const AMAZON_HOST_RX = /(^|\.)(amazon\.[a-z.]+|amzn\.to|amzn\.com|amzn\.eu|a\.co)$/i;
+const AFFILIATE_PARAM_RX = /[?&#](ref|tag|aff|affid|aff_id|aff_sub|affiliate|affiliate_id|aid|irclickid|irgwc|clickid|ranmid|raneaid|ransiteid|sscid|cjevent|awc|sharedid|rfsn|partner|partner_id|via|utm_medium=affiliate)(=|&|$)/i;
+const hostOf = (u) => { try { return new URL(u).hostname.toLowerCase().replace(/^www\./, ""); } catch { return ""; } };
+const isOff = (v) => /^(false|no|n|0|off)$/i.test(String(v ?? "").trim());
+function linkFor(o, asin) {
+  const raw = String(o.my_url || "").trim();
+  const mine = /^https?:\/\//i.test(raw) ? raw : (/^[\w-]+(\.[\w-]+)+(\/|$)/.test(raw) ? "https://" + raw : "");
+  const host = hostOf(mine);
+  if (host && !AMAZON_HOST_RX.test(host) && (isOff(o.amazon_enabled) || !asin)) {
+    const affiliate = AFFILIATE_PARAM_RX.test(mine);
+    return { url: mine, shop: host, affiliate, rel: affiliate ? "sponsored nofollow noopener" : "nofollow noopener" };
+  }
+  if (asin) return { url: `https://www.amazon.com/dp/${asin}?tag=${AFFILIATE_TAG}`, shop: "", affiliate: true, rel: "sponsored nofollow noopener" };
+  if (mine) return { url: mine, shop: "", affiliate: true, rel: "sponsored nofollow noopener" }; // amzn.to short links
+  return null;
+}
+const buyLabel = (p) => (p.shop ? `Shop at ${p.shop}` : "Check price on Amazon");
+const linkClass = (p) => (p.shop ? "amazon-link shop-link" : "amazon-link");
+
+// ---------- gift guides: hand-picked + tagged in the Sheet ----------
+// Each guide section in data/guides.json has a short "key" (day2-cozy, kallah-cozy, chanukah-wife…).
+// Typing that key in a product's "guides" column in the Sheet adds the product to that section,
+// after the hand-picked ones, most popular first, up to GUIDE_CAP gifts per section.
+// Shortcuts: "day2" = day2-cozy; "chanukah" = chanukah-wife / -husband / -both by who it's for.
+const GUIDE_CAP = 8;
+const parseGuideTags = (v) => String(v || "").toLowerCase().split(/[,;\n]/)
+  .map((s) => s.trim().replace(/[\s_]+/g, "-").replace(/^day-(\d)/, "day$1")).filter(Boolean);
+const WEDDING_WORDS_RX = /\bmr\.?\s*(?:&|and)\s*mrs\b|\bbride\b|\bgroom\b|\bnewly ?weds?\b/i;
+function fillGuides(guides, products) {
+  const sections = guides.flatMap((g) => g.sections.filter((s) => s.key));
+  const byKey = new Map(sections.map((s) => [s.key, s]));
+  const unknown = new Set();
+  const resolve = (tag, p) => {
+    if (byKey.has(tag)) return byKey.get(tag);
+    if (tag === "chanukah") return byKey.get(p.gender === "her" ? "chanukah-wife" : p.gender === "him" ? "chanukah-husband" : "chanukah-both");
+    const hits = sections.filter((s) => s.key.split("-")[0] === tag);
+    if (hits.length === 1) return hits[0];
+    unknown.add(tag); return null;
+  };
+  const tagged = new Map();
+  for (const p of [...products].sort(byPop)) for (const tag of p.guides || []) {
+    const s = resolve(tag, p);
+    if (!s) continue;
+    if (!tagged.has(s)) tagged.set(s, []);
+    if (!tagged.get(s).includes(p)) tagged.get(s).push(p);
+  }
+  const live = new Set(products.map((p) => p.id));
+  let added = 0;
+  for (const s of sections) {
+    const room = Math.max(0, (s.cap || GUIDE_CAP) - s.products.filter((id) => live.has(id)).length);
+    const cardsOk = /card|wrap/i.test(s.heading);
+    const seasonal = /^chanukah/.test(s.key);
+    const extra = (tagged.get(s) || []).filter((p) => !s.products.includes(p.id)
+      && (cardsOk || !/card|wrap/i.test(p.category))
+      && !(seasonal && (p.weddingOnly ?? WEDDING_WORDS_RX.test(p.title)))).slice(0, room);
+    s.products = [...s.products, ...extra.map((p) => p.id)];
+    added += extra.length;
+  }
+  return { added, unknown: [...unknown] };
+}
+
 const WHO = {
   him: { slug: "him", label: "For Him", h1: "Gifts for Him: the Chosson or Your Husband", title: "Gifts for Him: Chosson & Husband Gift Ideas", blurb: "Gift ideas for a chosson in the week before the wedding, or for your husband on an anniversary or Yom Tov.", phrase: "him" },
   her: { slug: "her", label: "For Her", h1: "Gifts for Her: the Kallah or Your Wife", title: "Gifts for Her: Kallah & Wife Gift Ideas", blurb: "Gift ideas for a kallah in the week before the wedding, or for your wife on an anniversary or Yom Tov.", phrase: "her" },
@@ -119,8 +184,9 @@ async function loadProducts() {
     const id = String(o.product_id || "").trim() || asin || `product-${index + 1}`;
     const title = String(o.site_title || "").trim();
     if (!title) return;
-    const url = asin ? `https://www.amazon.com/dp/${asin}?tag=${AFFILIATE_TAG}` : String(o.my_url || "").trim();
-    if (!url) return;
+    const link = linkFor(o, asin);
+    if (!link) return;
+    const { url, shop, rel } = link;
     const name = String(names[id] || "").trim() || shortName(title);
     let slug = slugLock[id];
     if (!slug) {
@@ -131,7 +197,8 @@ async function loadProducts() {
     }
     const category = String(o.categories ?? o["categories "] ?? "").trim();
     products.push({
-      id, asin, title, name, slug, url,
+      id, asin, title, name, slug, url, shop, rel,
+      guides: parseGuideTags(o.guides),
       image: cleanImage(o.photo_url),
       category,
       gender: normalizeGender(o.who_is_it_for),
@@ -157,7 +224,7 @@ function normalizeBand(raw) {
   return hit || s;
 }
 const bandRank = (b) => { const i = BAND_ORDER.indexOf(b); return i < 0 ? 99 : i; };
-const priceLabel = (p) => (p.band ? `${esc(p.band)} · Check price on Amazon` : "Check price on Amazon");
+const priceLabel = (p) => (p.band ? `${esc(p.band)} · ` : "") + esc(buyLabel(p));
 
 // ---------- page pieces ----------
 const nav = [
@@ -191,7 +258,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=11" />
+  <link rel="stylesheet" href="/style.css?v=12" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
@@ -246,11 +313,11 @@ function footer(ctx) {
         <span>Email: <a href="mailto:info@7daygifts.com">info@7daygifts.com</a></span>
       </div>
       <div class="footer-disclosure">
-        When you buy through our links, we may earn a small commission. Prices and availability are set by Amazon and can change, so check the current price on Amazon.
+        When you buy through our links, we may earn a small commission. Prices and availability are set by Amazon (or by the shop, for Small Shops gifts) and can change, so check the current price before you buy.
       </div>
     </footer>
   </div>
-  <script src="/app.js?v=8"></script>
+  <script src="/app.js?v=9"></script>
 </body>
 </html>
 `;
@@ -267,14 +334,14 @@ function card(p, { headingTag = "h3" } = {}) {
   const img = p.image
     ? `<img class="product-image" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" width="500" height="500" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
-  return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}" data-band="${esc(p.band)}">
+  return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}" data-band="${esc(p.band)}" data-shop="${p.shop ? 1 : 0}">
   <button type="button" class="heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
   <a class="product-link" href="/gifts/${p.slug}.html">
     <div class="product-image-wrap${p.image ? "" : " image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
     <${headingTag} class="product-title">${esc(p.name)}</${headingTag}>
   </a>
   <div class="product-card-body">
-    <a class="btn-pill btn-amazon amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">${priceLabel(p)}</a>
+    <a class="btn-pill btn-amazon ${linkClass(p)}" href="${esc(p.url)}" target="_blank" rel="${p.rel}" data-id="${esc(p.id)}">${priceLabel(p)}</a>
   </div>
 </article>`;
 }
@@ -453,15 +520,15 @@ function pageProduct(ctx, p) {
             <p class="product-detail-desc">${esc(p.description)}</p>
             <dl class="product-facts">
               <div><dt>Who it's for</dt><dd><a href="/for/${who.slug}.html">${esc(whoLine)}</a></dd></div>
-              ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check Amazon for today's price)</span></dd></div>` : ""}
+              ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check ${p.shop ? "the shop" : "Amazon"} for today's price)</span></dd></div>` : ""}
               ${cat ? `<div><dt>Category</dt><dd><a href="/category/${cat.slug}.html">${esc(cat.name)}</a></dd></div>` : ""}
             </dl>
             <div class="product-actions">
-              <a class="btn-pill btn-primary btn-big amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">${priceLabel(p)}</a>
+              <a class="btn-pill btn-primary btn-big ${linkClass(p)}" href="${esc(p.url)}" target="_blank" rel="${p.rel}" data-id="${esc(p.id)}">${priceLabel(p)}</a>
               <button type="button" class="heart heart-btn" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
             </div>
-            ${p.title !== p.name ? `<p class="product-note">Amazon listing: ${esc(p.title)}</p>` : ""}
-            <p class="product-note">Price and delivery are shown on Amazon and can change. As an Amazon Associate we may earn from qualifying purchases.</p>
+            ${p.title !== p.name && !p.shop ? `<p class="product-note">Amazon listing: ${esc(p.title)}</p>` : ""}
+            ${p.shop ? `<p class="product-note">Sold by ${esc(p.shop)}. Price, shipping and returns are set by the shop.${p.rel.includes("sponsored") ? " We may earn a commission if you buy through this link." : ""}</p>` : `<p class="product-note">Price and delivery are shown on Amazon and can change. As an Amazon Associate we may earn from qualifying purchases.</p>`}
             ${guides.length ? `<p class="product-guides">Featured in: ${guides.map((g) => `<a href="/guides/${g.slug}.html">${esc(shortGuide(g.title))}</a>`).join(" · ")}</p>` : ""}
           </div>
         </article>
@@ -566,8 +633,11 @@ async function main() {
   const guides = await readJSON("data/guides.json", []);
   const catMap = new Map();
   for (const p of products) if (p.category) { if (!catMap.has(p.category)) catMap.set(p.category, []); catMap.get(p.category).push(p); }
+  // every product linking to its own shop also shows under "Small Shops" (the page is skipped while empty)
+  for (const p of products) if (p.shop && p.category !== SMALL_SHOPS) { if (!catMap.has(SMALL_SHOPS)) catMap.set(SMALL_SHOPS, []); catMap.get(SMALL_SHOPS).push(p); }
+  const guideFill = fillGuides(guides, products);
   const categories = [...catMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([name, list]) => ({ name, slug: slugify(name), products: list, indexable: list.length >= 2 }));
+    .map(([name, list]) => ({ name, slug: slugify(name), products: list, indexable: list.length >= 2 || (name === SMALL_SHOPS && list.length >= 1) }));
   const ctx = { products, categories, guides, catIntros };
 
   // generated folders are rebuilt from scratch so removed products disappear
@@ -586,7 +656,7 @@ async function main() {
   for (const p of products) await add(`gifts/${p.slug}.html`, pageProduct(ctx, p));
 
   // product data for the wish list and gallery scripts (same shape the old app.js used)
-  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, url: p.url, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, occasions: p.occasions }))));
+  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, url: p.url, shop: p.shop, rel: p.rel, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, occasions: p.occasions }))));
   await writeOut("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${SITE}/${u}</loc></url>`).join("\n")}\n</urlset>\n`);
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 
@@ -597,6 +667,10 @@ async function main() {
     const sorted = Object.fromEntries(Object.entries(slugLock).sort(([a], [b]) => a.localeCompare(b)));
     await writeFile(path.join(ROOT, "data/slugs.json"), JSON.stringify(sorted, null, 2) + "\n");
   }
+  console.log(`Gift guides: ${guideFill.added} gifts added from the Sheet's "guides" column.`);
+  if (guideFill.unknown.length) console.log(`Unknown guide keys in the Sheet (ignored): ${guideFill.unknown.join(", ")}`);
+  const shops = products.filter((p) => p.shop);
+  if (shops.length) console.log(`Small Shops products: ${shops.map((p) => `${p.id} (${p.shop})`).join(", ")}`);
   const missing = products.filter((p) => !p.hasOwnDescription).map((p) => p.id);
   console.log(`Built ${products.length} product pages, ${categories.length} category pages, 3 who-it's-for pages, ${guides.length} guides, ${urls.length} URLs in sitemap -> ${OUT}`);
   if (missing.length) console.log(`Products using the automatic fallback description (add one in the sheet's site_description or data/descriptions.json): ${missing.join(", ")}`);

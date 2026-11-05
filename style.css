@@ -924,7 +924,7 @@ html.menu-locked, html.menu-locked body{ overflow:hidden; }
   .nav-link{padding:8px 10px;}
 }
 @media (max-width: 768px){
-  .product-detail{grid-template-columns:1fr;gap:18px;padding:16px;}
+  .product-detail{grid-template-columns:minmax(0,1fr);gap:18px;padding:16px;}
   .product-detail-desc{font-size:16px;}
   .tile-row{grid-template-columns:1fr;gap:10px;}
   .tile{padding:16px 18px;}
@@ -968,3 +968,8 @@ html.menu-locked, html.menu-locked body{ overflow:hidden; }
 .mobile-menu a.mobile-link:active{background:#ECEFF3;transform:scale(.98);}
 .mobile-menu a.mobile-link.active{background:var(--primary);border-color:var(--primary);color:#fff;}
 .mobile-menu a.mobile-link.active .mobile-link-chev{color:#fff;}
+
+/* keep product pages inside the phone screen */
+.product-detail-body,.product-facts>div{min-width:0;max-width:100%;}
+.product-facts dd{overflow-wrap:anywhere;}
+.product-actions .btn-big{white-space:normal;text-align:center;max-width:100%;flex:1 1 220px;}
