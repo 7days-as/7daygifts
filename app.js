@@ -416,14 +416,24 @@ function initCountdown() {
 }
 
 // ========= EMAIL CAPTURE =========
+// One handler, one request per sign-up: the button is locked while the request is out
+// (a double tap or a second Enter does nothing), and the same address is not sent twice
+// from this device within 10 minutes.
+const EMAIL_SENT_KEY = "7DG_EMAIL_SENT";
 function initEmailForm() {
   const form = $("emailForm");
   const success = $("emailSuccess");
   const error = $("emailError");
-  if (!form) return;
+  if (!form || form.dataset.bound === "1") return;
+  form.dataset.bound = "1";
+  const button = form.querySelector('button[type="submit"]');
+  const label = button?.textContent || "";
+  let sending = false;
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    event.stopImmediatePropagation();
+    if (sending) return;
     const email = $("emailInput")?.value?.trim();
     const weddingDate = $("weddingDate")?.value?.trim() || "";
     const company = $("companyField")?.value?.trim() || "";
@@ -431,6 +441,14 @@ function initEmailForm() {
     success?.classList.add("hidden");
     error?.classList.add("hidden");
     if (IS_PREVIEW) { $("emailPreview")?.classList.remove("hidden"); return; }
+    const last = safeParse(localStorage.getItem(EMAIL_SENT_KEY), null);
+    if (last && last.email === email.toLowerCase() && Date.now() - last.at < 10 * 60 * 1000) {
+      form.reset();
+      success?.classList.remove("hidden");
+      return;
+    }
+    sending = true;
+    if (button) { button.disabled = true; button.textContent = "Joining…"; }
     try {
       const response = await fetch(EMAIL_SCRIPT_URL, {
         method: "POST",
@@ -438,12 +456,35 @@ function initEmailForm() {
         body: JSON.stringify({ email, wedding_date: weddingDate, source: "7daygifts_site", company })
       });
       if (!response.ok) throw new Error("Request failed");
+      try { localStorage.setItem(EMAIL_SENT_KEY, JSON.stringify({ email: email.toLowerCase(), at: Date.now() })); } catch {}
       form.reset();
       success?.classList.remove("hidden");
     } catch (err) {
       console.error(err);
       error?.classList.remove("hidden");
+    } finally {
+      sending = false;
+      if (button) { button.disabled = false; button.textContent = label; }
     }
+  });
+}
+
+// ========= CONTACT FORM =========
+// Opens the visitor's own email app with their note addressed to info@7daygifts.com.
+function initContactForm() {
+  const form = $("contactForm");
+  if (!form || form.dataset.bound === "1") return;
+  form.dataset.bound = "1";
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = $("contactName")?.value?.trim() || "";
+    const topic = $("contactTopic")?.value || "A note";
+    const message = $("contactMessage")?.value?.trim() || "";
+    if (!message) return;
+    const subject = `${topic} — 7daygifts.com`;
+    const body = `${message}${name ? `\n\n— ${name}` : ""}`;
+    window.location.href = `mailto:info@7daygifts.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    $("contactDone")?.classList.remove("hidden");
   });
 }
 
@@ -451,6 +492,7 @@ function initEmailForm() {
 document.addEventListener("DOMContentLoaded", async () => {
   initMenu();
   initEmailForm();
+  initContactForm();
   initClicks();
   initGallery();
   initScrollers();

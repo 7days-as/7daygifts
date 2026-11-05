@@ -346,7 +346,7 @@ async function loadProducts() {
 // ---------- page pieces ----------
 const nav = [
   ["/index.html", "Home"], ["/gift-gallery.html", "All Gifts"], ["/gift-finder.html", "Gift Finder"], ["/guides/", "Gift Guides"],
-  ["/chanukah/", "Chanukah", "seasonal nav-chanukah"], ["/wishlist.html", "Wish List"],
+  ["/wishlist.html", "Wish List"], ["/contact.html", "Contact"],
 ];
 
 const ICON = {
@@ -360,7 +360,7 @@ const ICON = {
 function head({ title, description, canonical, image, type = "website", noindex = false, seasonal = false, jsonld = [], ctx }) {
   let robots = "";
   if (PREVIEW) robots = `<meta name="robots" content="noindex, nofollow" />`;
-  else if (seasonal) robots = `<meta name="robots" content="${noindex ? "noindex, follow" : "index, follow"}" data-seasonal="chanukah" />`;
+  else if (seasonal) robots = `<meta name="robots" content="noindex, follow" />`; // Chanukah pages: direct link only (Avrohom, Nov 4)
   else if (noindex) robots = `<meta name="robots" content="noindex, follow" />`;
   const img = image || `${SITE}/hero.jpg`;
   const ga = PREVIEW ? "" : `
@@ -380,7 +380,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta name="description" content="${esc(description)}" />
   <meta name="theme-color" content="#1F3358" />
   ${robots}${PREVIEW ? '\n  <meta name="7dg-preview" content="1" />' : ""}
-  <script>${SEASON_SCRIPT}</script>
+  <script>${seasonal ? SEASON_SCRIPT : "window.__chanukah={on:false};"}</script>
   <link rel="canonical" href="${esc(canonical)}" />
   <meta property="og:site_name" content="7 Day Gifts" />
   <meta property="og:type" content="${type}" />
@@ -393,13 +393,19 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" />
   <link rel="stylesheet" href="/style.css?v=${ASSET_V}" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#ffffff" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "14";
+const ASSET_V = "15";
 
 function chanukahBand(ctx) {
+  return ""; // Chanukah is not promoted on the site (Avrohom, Nov 4); the pages stay reachable by direct link
+
   const s = ctx.season;
   const pattern = [ICON.dreidel, ICON.star, ICON.dreidel, ICON.star].join("");
   return `<a class="chanukah-band seasonal" href="/chanukah/" aria-label="Chanukah gifts">
@@ -460,7 +466,7 @@ function footer(ctx) {
           <p>Thoughtful gift ideas for the seven days before the wedding, and every anniversary after.</p>
           <p class="footer-contact"><a href="mailto:info@7daygifts.com">info@7daygifts.com</a><br /><a href="tel:14753294438">475-329-4438</a></p>
         </div>
-        <div class="footer-col"><div class="footer-heading">Shop</div><a href="/gift-gallery.html">All gifts</a><a href="/gift-finder.html">Gift finder</a><a href="/for/her.html">Gifts for her</a><a href="/for/him.html">Gifts for him</a><a href="/for/couples.html">For either of you</a><a href="/budget/under-50.html">Under $50</a><a class="seasonal" href="/chanukah/">Chanukah gifts</a></div>
+        <div class="footer-col"><div class="footer-heading">Shop</div><a href="/gift-gallery.html">All gifts</a><a href="/gift-finder.html">Gift finder</a><a href="/for/her.html">Gifts for her</a><a href="/for/him.html">Gifts for him</a><a href="/for/couples.html">For either of you</a><a href="/budget/under-50.html">Under $50</a><a href="/contact.html">Contact us</a></div>
         <div class="footer-col"><div class="footer-heading">Gift guides</div>${guides}</div>
         <div class="footer-col footer-col-cats"><div class="footer-heading">Categories</div><div class="footer-cats">${cats}</div></div>
       </div>
@@ -525,7 +531,7 @@ const emailBlock = `
           <div class="email-copy">
             <p class="eyebrow">The 7 Day Gifts list</p>
             <h2 class="email-capture-title">Never get stuck on a gift again</h2>
-            <p class="email-capture-text">New finds every week, Chanukah and Yom Tov gift lists, and a friendly nudge before the big dates. No spam, ever.</p>
+            <p class="email-capture-text">New finds every week, ideas for the week before the wedding, and a friendly nudge before the big dates. No spam, ever.</p>
           </div>
           <form id="emailForm" class="email-form">
             <label class="email-label" for="emailInput">Email address</label>
@@ -548,7 +554,7 @@ function finderBlock(ctx, { tag = "h2", id = "finder" } = {}) {
           ${sectionHeader("Find the perfect gift in 3 taps", "Tell us who it’s for, the occasion and your budget. We’ll do the rest.", tag, { eyebrow: "Gift finder" })}
           <div class="finder-steps">
             <div class="finder-step"><div class="step-label"><span class="step-num">1</span>Who’s it for?</div><div class="pill-row" data-step="who">${pills("who", [["her", "Her"], ["him", "Him"], ["both", "Both of us"]])}</div></div>
-            <div class="finder-step"><div class="step-label"><span class="step-num">2</span>What’s the occasion?</div><div class="pill-row" data-step="occasion">${pills("occasion", OCCASIONS.map((o) => [o.key, o.label, o.seasonal ? "seasonal" : ""]))}</div></div>
+            <div class="finder-step"><div class="step-label"><span class="step-num">2</span>What’s the occasion?</div><div class="pill-row" data-step="occasion">${pills("occasion", OCCASIONS.filter((o) => o.key !== "chanukah").map((o) => [o.key, o.label, o.seasonal ? "seasonal" : ""]))}</div></div>
             <div class="finder-step"><div class="step-label"><span class="step-num">3</span>Your budget</div><div class="pill-row" data-step="budget">${pills("budget", [...BANDS.map((b) => [b.key, b.label]), ["any", "Any budget"]])}</div></div>
           </div>
           <div class="finder-status" id="finderStatus" aria-live="polite">Tap one in each row — results show up right here.</div>
@@ -592,6 +598,8 @@ function daysBlock(ctx) {
 }
 
 function chanukahBanner(ctx) {
+  return "";
+
   const s = ctx.season;
   return `<section class="section seasonal">
         <a class="chanukah-banner" href="/chanukah/">
@@ -634,7 +642,7 @@ function heroBlock(ctx, n) {
         <div class="hero-inner">
           <div class="hero-chips">
             <a class="hchip hchip-new" href="/gift-gallery.html?sort=recent"><span class="hchip-dot" aria-hidden="true"></span>New this week</a>
-            ${s && s.start ? `<a class="hchip hchip-chanukah seasonal" href="/chanukah/">${ICON.menorah}<span>Chanukah · <span data-chanukah-countdown>begins ${esc(new Date(s.start + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }))}</span></span></a>` : ""}
+            ${false && s && s.start ? `<a class="hchip hchip-chanukah seasonal" href="/chanukah/">${ICON.menorah}<span>Chanukah · <span data-chanukah-countdown>begins ${esc(new Date(s.start + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }))}</span></span></a>` : ""}
           </div>
           <h1 class="hero-title">Seven days.<br /><em>Seven thoughtful gifts.</em></h1>
           <p class="hero-subtitle">Hand-picked gifts for the chosson, the kallah, and every anniversary after.</p>
@@ -676,14 +684,13 @@ function pageHome(ctx) {
         ${sectionHeader(title, sub, "h2", { link })}
         ${row(list)}
       </section>` : "";
-  return head({ ctx, title: "7 Day Gifts · Gift Ideas for the 7 Days Before the Wedding & Every Anniversary", description: `${n} hand-picked gift ideas for the seven days before a Jewish wedding, for the chosson and the kallah, plus anniversary and Chanukah gifts for your spouse.`, canonical: SITE + "/", jsonld: ld }) + header("Home", ctx) + `
+  return head({ ctx, title: "7 Day Gifts · Gift Ideas for the 7 Days Before the Wedding & Every Anniversary", description: `${n} hand-picked gift ideas for the seven days before a Jewish wedding, for the chosson and the kallah, plus anniversary gifts for your spouse.`, canonical: SITE + "/", jsonld: ld }) + header("Home", ctx) + `
 ${heroBlock(ctx, n)}
       <ul class="trust-strip" aria-label="Why 7 Day Gifts">
         <li><span class="trust-ico" aria-hidden="true">✓</span>Hand-picked</li>
         <li><span class="trust-ico" aria-hidden="true">★</span>Top-rated on Amazon</li>
         <li><span class="trust-ico" aria-hidden="true">✦</span>New gifts weekly</li>
       </ul>
-${chanukahBanner(ctx)}
       <section class="section catalog">
         <div class="catalog-head">
           <div>
@@ -761,7 +768,7 @@ function pageGallery(ctx) {
   const ld = { "@context": "https://schema.org", "@type": "CollectionPage", name: "All Gifts", url: SITE + "/gift-gallery.html",
     mainEntity: { "@type": "ItemList", numberOfItems: list.length, itemListElement: list.map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/gifts/${p.slug}.html`, name: p.name })) } };
   const side = ctx.categories.filter((c) => SIDE_CATEGORIES.includes(c.name.toLowerCase()));
-  return head({ ctx, title: "All Gift Ideas: Chosson, Kallah, Anniversary & Chanukah Gifts · 7 Day Gifts", description: `Browse all ${n} gift ideas for the chosson, the kallah and your spouse. Filter by who it's for, budget and category.`, canonical: SITE + "/gift-gallery.html", jsonld: [ld] }) + header("All Gifts", ctx) + `
+  return head({ ctx, title: "All Gift Ideas: Chosson, Kallah & Anniversary Gifts · 7 Day Gifts", description: `Browse all ${n} gift ideas for the chosson, the kallah and your spouse. Filter by who it's for, budget and category.`, canonical: SITE + "/gift-gallery.html", jsonld: [ld] }) + header("All Gifts", ctx) + `
       <section class="section">
         ${sectionHeader(`All ${n} gifts`, "Filter by who it’s for, budget and category.", "h1", { eyebrow: "The full collection" })}
         <p class="finder-nudge">Not sure where to start? <a href="/gift-finder.html">Try the 3-tap gift finder</a>.</p>
@@ -826,7 +833,7 @@ function pageProduct(ctx, p) {
               ${p.cardLabel ? `<div><dt>Card type</dt><dd>${esc(p.cardLabel)}</dd></div>` : ""}
               ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check ${p.shop ? "the shop" : "Amazon"} for today's price)</span></dd></div>` : ""}
               ${cat ? `<div><dt>Category</dt><dd><a href="/category/${cat.slug}.html">${esc(cat.name)}</a></dd></div>` : ""}
-              ${occ.length ? `<div><dt>Great for</dt><dd>${occ.map((o) => o.key === "chanukah" ? `<a href="/chanukah/">${o.short}</a>` : esc(o.short)).join(", ")}</dd></div>` : ""}
+              ${occ.filter((o) => o.key !== "chanukah").length ? `<div><dt>Great for</dt><dd>${occ.filter((o) => o.key !== "chanukah").map((o) => esc(o.short)).join(", ")}</dd></div>` : ""}
             </dl>
             <div class="product-actions">
               <a class="btn-pill btn-primary btn-big ${linkClass(p)}" href="${esc(p.url)}" target="_blank" rel="${p.rel}" data-id="${esc(p.id)}">${esc(buyLabel(p))}</a>
@@ -870,7 +877,7 @@ function pageCategory(ctx, c) {
   const others = ctx.categories.filter((o) => o.name !== c.name).map((o) => `<a class="chip" href="/category/${o.slug}.html">${esc(o.name)} <span class="chip-count">${o.products.length}</span></a>`).join("");
   const isCards = /card/i.test(c.name), isWrap = /wrap/i.test(c.name);
   const h1 = isCards || isWrap ? c.name : `${c.name} Gift Ideas`;
-  const ttl = isCards ? `${c.name}: Sweet & Funny (Clean) Cards for Your Spouse | 7 Day Gifts` : isWrap ? `Gift Wrap: Wrapping Paper, Ribbon & Seals for Chanukah, Anniversary & Wedding Gifts | 7 Day Gifts` : `${c.name} Gift Ideas for the Chosson, Kallah & Spouse | 7 Day Gifts`;
+  const ttl = isCards ? `${c.name}: Sweet & Funny (Clean) Cards for Your Spouse | 7 Day Gifts` : isWrap ? `Gift Wrap: Wrapping Paper, Ribbon & Seals for Anniversary & Wedding Gifts | 7 Day Gifts` : `${c.name} Gift Ideas for the Chosson, Kallah & Spouse | 7 Day Gifts`;
   return pageList(ctx, {
     h1, title: ttl, eyebrow: `${list.length} ${list.length === 1 ? "pick" : "picks"}`,
     description: clip(`${intro} ${list.length} hand-picked ${list.length === 1 ? "idea" : "ideas"}.`, 158),
@@ -884,7 +891,7 @@ function pageCategory(ctx, c) {
 function pageWho(ctx, key) {
   const w = WHO[key];
   const list = ctx.mainGifts.filter((p) => (key === "all" ? p.gender === "all" : p.gender === key || p.gender === "all")).sort((a, b) => (a.gender === key ? 0 : 1) - (b.gender === key ? 0 : 1) || byPop(a, b));
-  const guideLinks = key === "her" ? ["gifts-for-the-kallah", "chanukah-gifts-for-wife-or-husband"] : key === "him" ? ["gifts-for-the-chosson", "chanukah-gifts-for-wife-or-husband"] : ["7-day-gift-ideas-before-the-wedding", "chanukah-gifts-for-wife-or-husband"];
+  const guideLinks = key === "her" ? ["gifts-for-the-kallah", "7-day-gift-ideas-before-the-wedding"] : key === "him" ? ["gifts-for-the-chosson", "7-day-gift-ideas-before-the-wedding"] : ["7-day-gift-ideas-before-the-wedding", "gifts-for-the-kallah", "gifts-for-the-chosson"];
   const gl = ctx.guides.filter((g) => guideLinks.includes(g.slug)).map((g) => `<a class="chip" href="/guides/${g.slug}.html">${esc(shortGuide(g.title))}</a>`).join("");
   return pageList(ctx, {
     h1: w.h1, title: `${w.title} | 7 Day Gifts`, description: clip(`${w.blurb} ${list.length} hand-picked ideas.`, 158), eyebrow: `${list.length} picks`,
@@ -926,7 +933,7 @@ function chanukahPages(ctx) {
   const chips = [["/chanukah/", "All Chanukah gifts"], ["/chanukah/for-her.html", "For her"], ["/chanukah/for-him.html", "For him"], ["/chanukah/under-50.html", "Under $50"], ["/guides/chanukah-gifts-for-wife-or-husband.html", "Chanukah gift guide"]]
     .map(([h, l]) => `<a class="chip chip-chanukah" href="${h}">${l}</a>`).join("");
   const extra = `${wrap.length ? `<section class="list-section"><h2 class="list-section-title">Don’t forget the wrapping</h2>${grid(wrap.slice(0, 4))}</section>` : ""}<div class="more-block"><h2 class="more-title">More Chanukah gifts</h2><div class="chip-row">${chips}</div></div>`;
-  const base = { seasonal: true, noindex: !s.on, active: "Chanukah", extra, festive: true };
+  const base = { seasonal: true, noindex: true, active: "Chanukah", extra, festive: true };
   const crumbsFor = (rel, label) => [["/index.html", "Home"], ["/chanukah/", "Chanukah Gifts"], ...(rel ? [[`/chanukah/${rel}`, label]] : [])];
   const bandSections = BANDS.map((b) => ({ id: `budget-${b.slug}`, title: b.label, list: pick((p) => p.bandKey === b.key), cap: 8, more: `/budget/${b.slug}.html` }));
   const noBand = pick((p) => !p.bandKey);
@@ -968,7 +975,7 @@ function pageGuide(ctx, g) {
   const ld = { "@context": "https://schema.org", "@type": "Article", headline: g.title, description: g.description, url: `${SITE}/guides/${g.slug}.html`,
     image: all[0]?.image ? [all[0].image] : undefined, publisher: { "@type": "Organization", name: "7 Day Gifts", logo: { "@type": "ImageObject", url: SITE + "/logo.png" } }, author: { "@type": "Organization", name: "7 Day Gifts" } };
   const others = ctx.guides.filter((o) => o.slug !== g.slug).map((o) => `<a class="chip" href="/guides/${o.slug}.html">${esc(shortGuide(o.title))}</a>`).join("");
-  return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", jsonld: [ld, bc.ld] }) + header("Gift Guides", ctx) + `
+  return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, jsonld: [ld, bc.ld] }) + header("Gift Guides", ctx) + `
       <section class="section guide">
         ${bc.html}
         <p class="eyebrow">Gift guide</p>
@@ -983,12 +990,45 @@ function pageGuide(ctx, g) {
 
 function pageGuides(ctx) {
   const bc = crumbs([["/index.html", "Home"], ["/guides/", "Gift Guides"]]);
-  return head({ ctx, title: "Gift Guides for Jewish Weddings, Anniversaries & Chanukah | 7 Day Gifts", description: "Practical gift guides for the seven days before the wedding, gifts for the chosson and the kallah, and Chanukah gifts for your spouse.", canonical: SITE + "/guides/", jsonld: [bc.ld] }) + header("Gift Guides", ctx) + `
+  return head({ ctx, title: "Gift Guides for the 7 Days Before the Wedding | 7 Day Gifts", description: "Practical gift guides for the seven days before the wedding, and gifts for the chosson and the kallah.", canonical: SITE + "/guides/", jsonld: [bc.ld] }) + header("Gift Guides", ctx) + `
       <section class="section">
         ${bc.html}
         ${sectionHeader("Gift Guides", "Short, practical guides to help you choose.", "h1")}
         <div class="guide-list">
           ${ctx.guides.map((g) => guideCard(ctx, g)).join("\n          ")}
+        </div>
+      </section>` + footer(ctx);
+}
+
+function pageContact(ctx) {
+  const bc = crumbs([["/index.html", "Home"], ["/contact.html", "Contact Us"]]);
+  const ld = { "@context": "https://schema.org", "@type": "ContactPage", name: "Contact 7 Day Gifts", url: SITE + "/contact.html",
+    mainEntity: { "@type": "Organization", name: "7 Day Gifts", url: SITE + "/", email: "info@7daygifts.com", telephone: "+1-475-329-4438" } };
+  return head({ ctx, title: "Contact Us | 7 Day Gifts", description: "Have a gift idea, a question, or feedback? We'd love to hear from you. Email info@7daygifts.com.", canonical: SITE + "/contact.html", jsonld: [ld, bc.ld] }) + header("Contact", ctx) + `
+      <section class="section contact-page">
+        ${bc.html}
+        <div class="contact-card">
+          <p class="eyebrow">Say hello</p>
+          <h1 class="section-title">Contact Us</h1>
+          <p class="contact-lead">Have a gift idea, a question, or feedback? We'd love to hear from you.</p>
+          <p class="contact-direct"><a class="btn-pill btn-primary contact-mail" href="mailto:info@7daygifts.com?subject=Hello%20from%207daygifts.com">Email info@7daygifts.com</a></p>
+          <p class="contact-or">Or write it here, and we'll open your email app with your note ready to send:</p>
+          <form id="contactForm" class="contact-form">
+            <label class="contact-label" for="contactName">Your name (optional)</label>
+            <input type="text" id="contactName" name="name" class="contact-input" autocomplete="name" />
+            <label class="contact-label" for="contactTopic">What's it about?</label>
+            <select id="contactTopic" name="topic" class="contact-input">
+              <option>A gift idea</option>
+              <option>A question</option>
+              <option>Feedback</option>
+              <option>Something else</option>
+            </select>
+            <label class="contact-label" for="contactMessage">Message</label>
+            <textarea id="contactMessage" name="message" class="contact-input contact-message" rows="5" required></textarea>
+            <button type="submit" class="btn-pill btn-primary contact-send">Write the email</button>
+          </form>
+          <p id="contactDone" class="contact-done hidden">Your email app should open with your note. If it didn't, just email us at <a href="mailto:info@7daygifts.com">info@7daygifts.com</a>.</p>
+          <p class="contact-phone">Prefer the phone? Call <a href="tel:14753294438">475-329-4438</a>.</p>
         </div>
       </section>` + footer(ctx);
 }
@@ -1023,7 +1063,9 @@ async function main() {
     .map(([name, list]) => ({ name, slug: slugify(name), products: list, indexable: list.length >= 2 || (name === SMALL_SHOPS && list.length >= 1) }));
   const season = chanukahSeason();
   const mainGifts = products.filter((p) => !p.side); // anniversary cards & wrapping paper have their own sections
-  const ctx = { products, mainGifts, categories, guides, catIntros, season };
+  // A guide marked "hidden" in data/guides.json is still built (direct link only) but linked nowhere, noindex, not in the sitemap.
+  const publicGuides = guides.filter((g) => !g.hidden);
+  const ctx = { products, mainGifts, categories, guides: publicGuides, catIntros, season: { ...season, on: false } };
 
   // generated folders are rebuilt from scratch so removed products disappear
   for (const dir of ["gifts", "category", "for", "guides", "budget", "chanukah"]) await rm(path.join(OUT, dir), { recursive: true, force: true });
@@ -1033,13 +1075,14 @@ async function main() {
   await add("index.html", pageHome(ctx), true, "");
   await add("gift-gallery.html", pageGallery(ctx));
   await add("gift-finder.html", pageFinder(ctx));
+  await add("contact.html", pageContact(ctx));
   await add("wishlist.html", pageWishlist(ctx), false);
   await add("404.html", page404(ctx), false);
   await add("guides/index.html", pageGuides(ctx), true, "guides/");
-  for (const g of guides) await add(`guides/${g.slug}.html`, pageGuide(ctx, g));
+  for (const g of guides) await add(`guides/${g.slug}.html`, pageGuide(ctx, g), !g.hidden);
   for (const k of ["her", "him", "all"]) await add(`for/${WHO[k].slug}.html`, pageWho(ctx, k));
   for (const b of budgetPages(ctx)) await add(b.rel, b.html, b.index);
-  for (const c of chanukahPages(ctx)) await add(c.rel, c.html, season.on, c.url || c.rel);
+  for (const c of chanukahPages(ctx)) await add(c.rel, c.html, false, c.url || c.rel); // direct link only, never in the sitemap
   for (const c of categories) await add(`category/${c.slug}.html`, pageCategory(ctx, c), c.indexable);
   const movedPages = await writeCategoryRedirects(categories);
   if (movedPages) console.log(`Old category addresses forwarded to the new ones: ${movedPages}`);
@@ -1051,7 +1094,7 @@ async function main() {
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 
   if (PREVIEW) {
-    for (const f of ["style.css", "app.js", "reviews.js", "logo.png", "logo-sm.png", "favicon.ico", "hero.jpg", "hero-1600.jpg", "hero-800.jpg"]) if (existsSync(path.join(ROOT, f))) await copyFile(path.join(ROOT, f), path.join(OUT, f));
+    for (const f of ["style.css", "app.js", "reviews.js", "logo.png", "logo-sm.png", "favicon.ico", "hero.jpg", "hero-1600.jpg", "hero-800.jpg", "favicon-16x16.png", "favicon-32x32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "site.webmanifest"]) if (existsSync(path.join(ROOT, f))) await copyFile(path.join(ROOT, f), path.join(OUT, f));
   } else {
     // keep product URLs stable even if a title changes in the sheet later
     const sorted = Object.fromEntries(Object.entries(slugLock).sort(([a], [b]) => a.localeCompare(b)));

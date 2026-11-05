@@ -478,3 +478,22 @@ html.menu-locked,html.menu-locked body{overflow:hidden}
 /* card type label (Funny, Sweet, Anniversary, Wedding, Just Because) */
 .card-label{display:inline-block;padding:2px 9px;border-radius:999px;background:#EEF2F8;color:#1F3358;border:1px solid #D5DEEC;font-size:12px;font-weight:600;line-height:1.5;letter-spacing:.01em}
 .product-card-body .chips{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start}
+
+/* ---------- Contact page ---------- */
+.contact-card{max-width:640px;margin:0 auto;padding:32px;border-radius:var(--radius);background:var(--card);border:1px solid var(--border-soft);box-shadow:var(--shadow-soft)}
+.contact-card .section-title{margin:4px 0 10px}
+.contact-lead{font-size:17px;color:var(--text);margin:0 0 18px}
+.contact-direct{margin:0 0 6px}
+.contact-mail{max-width:100%;overflow-wrap:anywhere;text-align:center}
+.contact-or{color:var(--muted);margin:18px 0 10px;font-size:15px}
+.contact-form{display:grid;gap:8px}
+.contact-label{font-size:13px;color:var(--muted);margin-top:4px}
+.contact-input{min-height:48px;padding:10px 14px;border-radius:14px;border:1px solid var(--border);background:#fff;font:16px var(--sans);color:var(--text);width:100%;max-width:100%}
+.contact-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(31,51,88,.12)}
+.contact-message{min-height:130px;resize:vertical}
+.contact-send{margin-top:8px;justify-self:start}
+.contact-done{margin-top:12px;color:var(--text)}
+.contact-done.hidden{display:none}
+.contact-phone{color:var(--muted);margin-top:18px;font-size:15px}
+.email-form button[type="submit"]:disabled{opacity:.65;cursor:wait}
+@media (max-width:520px){.contact-card{padding:22px 18px}.contact-send{justify-self:stretch}}
