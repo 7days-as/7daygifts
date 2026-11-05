@@ -282,13 +282,35 @@ a{
   transform:translateX(0);
 }
 
-.mobile-menu::before{
-  content:"";
+.menu-overlay{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.28);
-  z-index:-1;
+  background:rgba(0,0,0,0.35);
+  z-index:9998;
+  opacity:0;
+  transition:opacity .3s ease;
+  -webkit-tap-highlight-color:transparent;
 }
+.menu-overlay.show{ opacity:1; }
+.menu-overlay[hidden]{ display:none; }
+html.menu-locked, html.menu-locked body{ overflow:hidden; }
+.menu-close{
+  position:absolute;
+  top:18px;
+  right:16px;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+}
+.menu-close:hover{ background:#F5F5F5; }
+.mobile-menu{ overflow-y:auto; }
+.band-note{ color:var(--muted); font-size:.85em; }
 
 .mobile-menu a{
   width:100%;
@@ -912,3 +934,24 @@ a{
   .guide-intro p,.guide-section>p{font-size:16px;}
   .btn-amazon{font-size:13px;padding:8px 8px;}
 }
+
+/* ---------- Heart icon only (Nov 4, 2026) ---------- */
+.heart{border:none !important;background:transparent !important;box-shadow:none !important;width:40px;height:40px;padding:6px;border-radius:0;color:#e75480;}
+.heart .heart-icon{width:26px;height:26px;display:block;fill:rgba(255,255,255,.85);stroke:#e75480;stroke-width:1.8;transition:fill .15s ease,transform .15s ease;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.25));}
+.heart:hover{transform:none;}
+.heart:hover .heart-icon{transform:scale(1.08);}
+.heart.active{background:transparent !important;border:none !important;color:#e75480;}
+.heart.active .heart-icon{fill:#e75480;}
+.heart-btn{position:static;width:48px;height:48px;padding:6px;border-radius:0;}
+.heart-btn .heart-icon{width:32px;height:32px;filter:none;fill:#fff;}
+.heart-btn.active{background:transparent !important;color:#e75480;}
+.heart-btn.active .heart-icon{fill:#e75480;}
+@media (max-width:640px){ .heart{width:38px;height:38px;top:8px;right:8px;} }
+/* ---------- Guide cards with photos ---------- */
+.guide-card-photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:-4px -4px 10px;}
+.guide-card-photos img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#F4F5F8;}
+
+/* ---------- Slimmer phone menu (Nov 4, 2026: 'much thinner, to the right') ---------- */
+.mobile-menu{width:56%;max-width:230px;min-width:190px;padding:72px 14px 16px;border-radius:18px 0 0 18px;}
+.mobile-menu a{padding:10px 10px;margin:4px 0;font-size:15px;}
+.menu-close{top:14px;right:12px;width:36px;height:36px;font-size:16px;}

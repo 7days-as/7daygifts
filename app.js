@@ -36,11 +36,35 @@ function initMenu() {
   const btn = $("menuToggle");
   const menu = $("mobileMenu");
   if (!btn || !menu) return;
-  btn.addEventListener("click", () => menu.classList.toggle("open"));
-  menu.addEventListener("click", (event) => {
-    if (event.target === menu) menu.classList.remove("open");
-  });
-  menu.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => menu.classList.remove("open")));
+  let overlay = $("menuOverlay");
+  if (!overlay) { overlay = document.createElement("div"); overlay.id = "menuOverlay"; overlay.className = "menu-overlay"; overlay.hidden = true; menu.before(overlay); }
+  const closeBtn = $("menuClose");
+  let hideTimer;
+  function open() {
+    clearTimeout(hideTimer);
+    overlay.hidden = false;
+    requestAnimationFrame(() => { overlay.classList.add("show"); menu.classList.add("open"); });
+    menu.setAttribute("aria-hidden", "false");
+    btn.setAttribute("aria-expanded", "true");
+    document.documentElement.classList.add("menu-locked");
+  }
+  function close() {
+    menu.classList.remove("open");
+    overlay.classList.remove("show");
+    menu.setAttribute("aria-hidden", "true");
+    btn.setAttribute("aria-expanded", "false");
+    document.documentElement.classList.remove("menu-locked");
+    hideTimer = setTimeout(() => { overlay.hidden = true; }, 300);
+  }
+  btn.addEventListener("click", () => (menu.classList.contains("open") ? close() : open()));
+  overlay.addEventListener("click", close);
+  closeBtn?.addEventListener("click", close);
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && menu.classList.contains("open")) close(); });
+  menu.querySelectorAll("a").forEach((link) => link.addEventListener("click", close));
+  // swipe right to close
+  let x0 = null;
+  menu.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+  menu.addEventListener("touchend", (e) => { if (x0 !== null && e.changedTouches[0].clientX - x0 > 60) close(); x0 = null; }, { passive: true });
 }
 
 // ========= WISHLIST =========
@@ -76,7 +100,8 @@ function syncHearts() {
     const saved = isSaved(btn.dataset.id);
     btn.classList.toggle("active", saved);
     btn.setAttribute("aria-pressed", saved ? "true" : "false");
-    if (btn.classList.contains("heart-btn")) btn.textContent = saved ? "♥ Saved" : "♥ Save";
+    const label = btn.getAttribute("aria-label") || "";
+    btn.setAttribute("aria-label", saved ? label.replace(/^Save /, "Remove ").replace(/ to your wish list$/, " from your wish list") : label.replace(/^Remove /, "Save ").replace(/ from your wish list$/, " to your wish list"));
   });
 }
 
@@ -119,13 +144,13 @@ function renderCard(p) {
     ? `<img class="product-image" src="${escapeHtml(p.image)}" alt="${title}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
   return `<article class="product-card" data-id="${escapeHtml(p.id)}">
-    <button type="button" class="heart active" data-id="${escapeHtml(p.id)}" aria-label="Remove ${title} from your wish list">♥</button>
+    <button type="button" class="heart active" data-id="${escapeHtml(p.id)}" aria-label="Remove ${title} from your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
     <a class="product-link" href="${href}">
       <div class="product-image-wrap ${p.image ? "" : "image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
       <h3 class="product-title">${title}</h3>
     </a>
     <div class="product-card-body">
-      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="sponsored nofollow noopener" data-id="${escapeHtml(p.id)}">Check price on Amazon</a>
+      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="sponsored nofollow noopener" data-id="${escapeHtml(p.id)}">${p.band ? escapeHtml(p.band) + " · " : ""}Check price on Amazon</a>
     </div>
   </article>`;
 }
@@ -153,6 +178,7 @@ function initGallery() {
   const genderWrap = $("genderPills");
   const sortRow = document.querySelector(".sort-row");
   const categoryFilter = $("categoryFilter");
+  const budgetFilter = $("budgetFilter");
   const empty = $("galleryEmpty");
 
   const params = new URLSearchParams(location.search);
@@ -161,12 +187,15 @@ function initGallery() {
     genderWrap.querySelectorAll("[data-gender]").forEach((b) => b.classList.toggle("active", b.dataset.gender === startGender));
   }
   const startCat = params.get("category");
+  const startBudget = params.get("budget");
+  if (startBudget && budgetFilter && [...budgetFilter.options].some((o) => o.value === startBudget)) budgetFilter.value = startBudget;
   if (startCat && categoryFilter && [...categoryFilter.options].some((o) => o.value === startCat)) categoryFilter.value = startCat;
 
   function apply() {
     const gender = genderWrap?.querySelector("[data-gender].active")?.dataset.gender || "all";
     const sort = sortRow?.querySelector(".sort-btn.active")?.dataset.sort || "popular";
     const category = categoryFilter?.value || "all";
+    const budget = budgetFilter?.value || "all";
     const sorted = [...cards].sort((a, b) =>
       sort === "recent"
         ? Number(b.dataset.order) - Number(a.dataset.order)
@@ -175,7 +204,8 @@ function initGallery() {
     sorted.forEach((card) => {
       const okGender = gender === "all" || card.dataset.gender === gender || card.dataset.gender === "all";
       const okCat = category === "all" || card.dataset.category === category;
-      card.hidden = !(okGender && okCat);
+      const okBudget = budget === "all" || card.dataset.band === budget;
+      card.hidden = !(okGender && okCat && okBudget);
       if (!card.hidden) shown++;
       grid.appendChild(card);
     });
@@ -197,6 +227,7 @@ function initGallery() {
     apply();
   });
   categoryFilter?.addEventListener("change", apply);
+  budgetFilter?.addEventListener("change", apply);
   apply();
 }
 

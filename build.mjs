@@ -139,11 +139,25 @@ async function loadProducts() {
       order: index,
       description: String(o.site_description || "").trim() || descriptions[id] ||
         `${name} — a ${category ? category.toLowerCase() + " " : ""}gift idea ${WHO[normalizeGender(o.who_is_it_for)].phrase === "either of you" ? "for either of you" : "for " + WHO[normalizeGender(o.who_is_it_for)].phrase}, hand-picked by 7 Day Gifts.`,
+      band: normalizeBand(o.price),
+      occasions: String(o.occasions || "").split(/[,;]/).map((s) => s.trim().toLowerCase()).filter(Boolean),
       hasOwnDescription: Boolean(String(o.site_description || "").trim() || descriptions[id]),
     });
   });
   return { products, slugLock };
 }
+
+// ---------- budget bands ----------
+// The band text typed in the Sheet's "price" column is shown as-is (never an exact Amazon price).
+const BAND_ORDER = ["Under $25", "$25–$50", "$50–$100", "$100–$200", "$200+"];
+function normalizeBand(raw) {
+  let s = String(raw ?? "").trim().replace(/\s*[-–—]\s*/g, "–").replace(/\s+/g, " ");
+  if (!s) return "";
+  const hit = BAND_ORDER.find((b) => b.toLowerCase().replace(/\s/g, "") === s.toLowerCase().replace(/\s/g, ""));
+  return hit || s;
+}
+const bandRank = (b) => { const i = BAND_ORDER.indexOf(b); return i < 0 ? 99 : i; };
+const priceLabel = (p) => (p.band ? `${esc(p.band)} · Check price on Amazon` : "Check price on Amazon");
 
 // ---------- page pieces ----------
 const nav = [
@@ -177,7 +191,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=6" />
+  <link rel="stylesheet" href="/style.css?v=9" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
@@ -206,7 +220,9 @@ function header(active) {
     <div class="affiliate-topbar">
       As an Amazon Associate and affiliate partner, we may earn from qualifying purchases.
     </div>
-    <aside id="mobileMenu" class="mobile-menu" aria-label="Mobile menu">
+    <div id="menuOverlay" class="menu-overlay" hidden></div>
+    <aside id="mobileMenu" class="mobile-menu" aria-label="Mobile menu" aria-hidden="true">
+      <button type="button" id="menuClose" class="menu-close" aria-label="Close menu">✕</button>
       ${mlinks}
     </aside>
     <main class="main-content">`;
@@ -234,25 +250,31 @@ function footer(ctx) {
       </div>
     </footer>
   </div>
-  <script src="/app.js?v=6"></script>
+  <script src="/app.js?v=8"></script>
 </body>
 </html>
 `;
 }
 const shortGuide = (t) => t.split(":")[0];
+function guideCard(ctx, g) {
+  const ids = [...new Set(g.sections.flatMap((s) => s.products))];
+  const pics = ids.map((id) => ctx.products.find((p) => p.id === id)).filter((p) => p && p.image).slice(0, 4);
+  const strip = pics.length ? `<span class="guide-card-photos">${pics.map((p) => `<img src="${esc(p.image)}" alt="" loading="lazy" width="160" height="160" onerror="this.style.visibility='hidden'" />`).join("")}</span>` : "";
+  return `<a class="guide-card" href="/guides/${g.slug}.html">${strip}<span class="guide-card-title">${esc(g.title)}</span><span class="guide-card-text">${esc(g.description)}</span></a>`;
+}
 
 function card(p, { headingTag = "h3" } = {}) {
   const img = p.image
     ? `<img class="product-image" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" width="500" height="500" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
-  return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}">
-  <button type="button" class="heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list">♥</button>
+  return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}" data-band="${esc(p.band)}">
+  <button type="button" class="heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
   <a class="product-link" href="/gifts/${p.slug}.html">
     <div class="product-image-wrap${p.image ? "" : " image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
     <${headingTag} class="product-title">${esc(p.name)}</${headingTag}>
   </a>
   <div class="product-card-body">
-    <a class="btn-pill btn-amazon amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">Check price on Amazon</a>
+    <a class="btn-pill btn-amazon amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">${priceLabel(p)}</a>
   </div>
 </article>`;
 }
@@ -326,7 +348,7 @@ function pageHome(ctx) {
       <section class="section">
         ${sectionHeader("Gift guides", "Short, practical guides to help you plan.")}
         <div class="guide-list">
-          ${ctx.guides.map((g) => `<a class="guide-card" href="/guides/${g.slug}.html"><span class="guide-card-title">${esc(g.title)}</span><span class="guide-card-text">${esc(g.description)}</span></a>`).join("\n          ")}
+          ${ctx.guides.map((g) => guideCard(ctx, g)).join("\n          ")}
         </div>
       </section>
 
@@ -346,12 +368,14 @@ ${emailBlock}` + footer(ctx);
 
 function pageGallery(ctx) {
   const list = [...ctx.products].sort(byPop);
+  const bands = [...new Set(ctx.products.map((p) => p.band).filter(Boolean))].sort((a, b) => bandRank(a) - bandRank(b) || a.localeCompare(b));
+  const bandOpts = bands.map((b) => `<option value="${esc(b)}">${esc(b)}</option>`).join("\n              ");
   const opts = ctx.categories.map((c) => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("\n              ");
   const ld = { "@context": "https://schema.org", "@type": "CollectionPage", name: "Gift Gallery", url: SITE + "/gift-gallery.html",
     mainEntity: { "@type": "ItemList", numberOfItems: list.length, itemListElement: list.map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE}/gifts/${p.slug}.html`, name: p.name })) } };
   return head({ title: "Gift Gallery: All 7 Day Wedding Gift Ideas · 7 Day Gifts", description: `Browse all ${list.length} gift ideas for the chosson, the kallah and your spouse. Filter by who it's for and by category.`, canonical: SITE + "/gift-gallery.html", jsonld: [ld] }) + header("Gift Gallery") + `
       <section class="section">
-        ${sectionHeader("Gift Gallery", "Filter by who it’s for and category — then sort.", "h1")}
+        ${sectionHeader("Gift Gallery", "Filter by who it’s for, category and budget — then sort.", "h1")}
         <div class="filters">
           <div class="filter-group">
             <div class="filter-label">Who is it for?</div>
@@ -375,6 +399,13 @@ function pageGallery(ctx) {
               ${opts}
             </select>
           </div>
+          ${bands.length ? `<div class="filter-group">
+            <div class="filter-label">Budget</div>
+            <select id="budgetFilter" class="sort-select" aria-label="Budget filter">
+              <option value="all">Any budget</option>
+              ${bandOpts}
+            </select>
+          </div>` : ""}
         </div>
         ${grid(list, "gallery-products")}
         <div id="galleryEmpty" class="callout hidden"><p>No gifts match this filter yet.</p></div>
@@ -386,7 +417,7 @@ function pageWishlist(ctx) {
       <section class="section">
         ${sectionHeader("Your Wish List", '<span id="wishlistSubtitle">Saved on this device.</span>', "h1")}
         <div id="wishlistEmpty" class="callout hidden">
-          <p>Your wish list is empty. Tap the ♥ on any gift to save it here.</p>
+          <p>Your wish list is empty. Tap the heart on any gift to save it here.</p>
           <p><a class="btn-pill btn-primary" href="/gift-gallery.html">Browse the gallery</a></p>
         </div>
         <div class="product-grid" id="wishlist-products"></div>
@@ -422,11 +453,12 @@ function pageProduct(ctx, p) {
             <p class="product-detail-desc">${esc(p.description)}</p>
             <dl class="product-facts">
               <div><dt>Who it's for</dt><dd><a href="/for/${who.slug}.html">${esc(whoLine)}</a></dd></div>
+              ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check Amazon for today's price)</span></dd></div>` : ""}
               ${cat ? `<div><dt>Category</dt><dd><a href="/category/${cat.slug}.html">${esc(cat.name)}</a></dd></div>` : ""}
             </dl>
             <div class="product-actions">
-              <a class="btn-pill btn-primary btn-big amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">Check price on Amazon</a>
-              <button type="button" class="btn-pill btn-ghost heart-btn heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list">♥ Save</button>
+              <a class="btn-pill btn-primary btn-big amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">${priceLabel(p)}</a>
+              <button type="button" class="heart heart-btn" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
             </div>
             ${p.title !== p.name ? `<p class="product-note">Amazon listing: ${esc(p.title)}</p>` : ""}
             <p class="product-note">Price and delivery are shown on Amazon and can change. As an Amazon Associate we may earn from qualifying purchases.</p>
@@ -507,7 +539,7 @@ function pageGuides(ctx) {
         ${bc.html}
         ${sectionHeader("Gift Guides", "Short, practical guides to help you choose.", "h1")}
         <div class="guide-list">
-          ${ctx.guides.map((g) => `<a class="guide-card" href="/guides/${g.slug}.html"><span class="guide-card-title">${esc(g.title)}</span><span class="guide-card-text">${esc(g.description)}</span></a>`).join("\n          ")}
+          ${ctx.guides.map((g) => guideCard(ctx, g)).join("\n          ")}
         </div>
       </section>` + footer(ctx);
 }
@@ -554,7 +586,7 @@ async function main() {
   for (const p of products) await add(`gifts/${p.slug}.html`, pageProduct(ctx, p));
 
   // product data for the wish list and gallery scripts (same shape the old app.js used)
-  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, url: p.url, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order }))));
+  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, url: p.url, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, occasions: p.occasions }))));
   await writeOut("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${SITE}/${u}</loc></url>`).join("\n")}\n</urlset>\n`);
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 
