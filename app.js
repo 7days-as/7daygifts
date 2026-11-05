@@ -31,7 +31,7 @@ function logProductClick(productId) {
   }).catch((error) => console.error("Error logging click:", error));
 }
 
-// ========= MENU =========
+// ========= MENU (slide-in drawer: tap outside, ✕, Esc, swipe right or a link closes it) =========
 function initMenu() {
   const btn = $("menuToggle");
   const menu = $("mobileMenu");
@@ -138,21 +138,27 @@ async function loadProducts() {
   }
 }
 
-// ========= WISHLIST PAGE =========
-function renderCard(p) {
+// ========= CARDS (wish list page and gift finder) =========
+const HEART_SVG = '<svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+function renderCard(p, { saved = true } = {}) {
   const title = escapeHtml(p.title || "Saved gift");
   const href = p.slug ? `/gifts/${encodeURIComponent(p.slug)}.html` : escapeHtml(p.url || "#");
-  const img = p.image
-    ? `<img class="product-image" src="${escapeHtml(p.image)}" alt="${title}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
+  const src = p.thumb || p.image;
+  const img = src
+    ? `<img class="product-image" src="${escapeHtml(src)}" alt="${title}" loading="lazy" decoding="async" width="400" height="400" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
   return `<article class="product-card" data-id="${escapeHtml(p.id)}">
-    <button type="button" class="heart active" data-id="${escapeHtml(p.id)}" aria-label="Remove ${title} from your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+    <button type="button" class="heart${saved ? " active" : ""}" data-id="${escapeHtml(p.id)}" aria-label="${saved ? "Remove" : "Save"} ${title} ${saved ? "from" : "to"} your wish list">${HEART_SVG}</button>
     <a class="product-link" href="${href}">
-      <div class="product-image-wrap ${p.image ? "" : "image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
-      <h3 class="product-title">${title}</h3>
+      <div class="product-image-wrap ${src ? "" : "image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
+      <div class="product-text">
+        <h3 class="product-title">${title}</h3>
+        ${p.hook ? `<p class="product-hook">${escapeHtml(p.hook)}</p>` : ""}
+      </div>
     </a>
     <div class="product-card-body">
-      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="${escapeHtml(p.rel || "sponsored nofollow noopener")}" data-id="${escapeHtml(p.id)}">${p.band ? escapeHtml(p.band) + " · " : ""}${p.shop ? "Shop at " + escapeHtml(p.shop) : "Check price on Amazon"}</a>
+      ${p.band ? `<span class="band">${escapeHtml(p.band)}</span>` : ""}
+      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="${escapeHtml(p.rel || "sponsored nofollow noopener")}" data-id="${escapeHtml(p.id)}">${p.shop ? "Shop at " + escapeHtml(p.shop) : "Check price on Amazon"}</a>
     </div>
   </article>`;
 }
@@ -178,26 +184,36 @@ function initGallery() {
   if (!grid) return;
   const cards = [...grid.querySelectorAll(".product-card")];
   const genderWrap = $("genderPills");
+  const budgetWrap = $("budgetPills");
   const sortRow = document.querySelector(".sort-row");
   const categoryFilter = $("categoryFilter");
-  const budgetFilter = $("budgetFilter");
   const empty = $("galleryEmpty");
+  const count = $("galleryCount");
 
   const params = new URLSearchParams(location.search);
-  const startGender = params.get("for");
-  if (startGender && genderWrap?.querySelector(`[data-gender="${CSS.escape(startGender)}"]`)) {
-    genderWrap.querySelectorAll("[data-gender]").forEach((b) => b.classList.toggle("active", b.dataset.gender === startGender));
+  const pick = (wrap, attr, value) => {
+    if (value && wrap?.querySelector(`[data-${attr}="${CSS.escape(value)}"]`)) {
+      wrap.querySelectorAll(`[data-${attr}]`).forEach((b) => b.classList.toggle("active", b.dataset[attr] === value));
+    }
+  };
+  pick(genderWrap, "gender", params.get("for"));
+  pick(sortRow, "sort", params.get("sort"));
+  // ?budget= takes a band key (25-50) or the band text ($25–$50)
+  let startBudget = params.get("budget");
+  if (startBudget && budgetWrap) {
+    const norm = (s) => s.toLowerCase().replace(/\s/g, "").replace(/[-—]/g, "–");
+    const byText = [...budgetWrap.querySelectorAll("[data-budget]")].find((b) => norm(b.textContent) === norm(startBudget));
+    if (byText) startBudget = byText.dataset.budget;
   }
+  pick(budgetWrap, "budget", startBudget);
   const startCat = params.get("category");
-  const startBudget = params.get("budget");
-  if (startBudget && budgetFilter && [...budgetFilter.options].some((o) => o.value === startBudget)) budgetFilter.value = startBudget;
   if (startCat && categoryFilter && [...categoryFilter.options].some((o) => o.value === startCat)) categoryFilter.value = startCat;
 
   function apply() {
     const gender = genderWrap?.querySelector("[data-gender].active")?.dataset.gender || "all";
+    const budget = budgetWrap?.querySelector("[data-budget].active")?.dataset.budget || "all";
     const sort = sortRow?.querySelector(".sort-btn.active")?.dataset.sort || "popular";
     const category = categoryFilter?.value || "all";
-    const budget = budgetFilter?.value || "all";
     const sorted = [...cards].sort((a, b) =>
       sort === "recent"
         ? Number(b.dataset.order) - Number(a.dataset.order)
@@ -205,22 +221,26 @@ function initGallery() {
     let shown = 0;
     sorted.forEach((card) => {
       const okGender = gender === "all" || card.dataset.gender === gender || card.dataset.gender === "all";
-      const okCat = category === "all" || card.dataset.category === category || (category === "Small Shops" && card.dataset.shop === "1");
       const okBudget = budget === "all" || card.dataset.band === budget;
-      card.hidden = !(okGender && okCat && okBudget);
+      // anniversary cards and wrapping paper show only when their category is picked
+      const okCat = category === "all" ? card.dataset.side !== "1" : (card.dataset.category === category || (category === "Small Shops" && card.dataset.shop === "1"));
+      card.hidden = !(okGender && okBudget && okCat);
       if (!card.hidden) shown++;
       grid.appendChild(card);
     });
     empty?.classList.toggle("hidden", shown > 0);
+    if (count) count.textContent = `Showing ${shown} ${shown === 1 ? "gift" : "gifts"}`;
   }
 
-  genderWrap?.addEventListener("click", (event) => {
-    const btn = event.target.closest("[data-gender]");
+  const pillGroup = (wrap, attr) => wrap?.addEventListener("click", (event) => {
+    const btn = event.target.closest(`[data-${attr}]`);
     if (!btn) return;
-    genderWrap.querySelectorAll("[data-gender]").forEach((b) => b.classList.remove("active"));
+    wrap.querySelectorAll(`[data-${attr}]`).forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     apply();
   });
+  pillGroup(genderWrap, "gender");
+  pillGroup(budgetWrap, "budget");
   sortRow?.addEventListener("click", (event) => {
     const btn = event.target.closest(".sort-btn");
     if (!btn) return;
@@ -229,8 +249,170 @@ function initGallery() {
     apply();
   });
   categoryFilter?.addEventListener("change", apply);
-  budgetFilter?.addEventListener("change", apply);
   apply();
+}
+
+// ========= GIFT FINDER (3 taps, all in the browser) =========
+function initFinder(products) {
+  const root = $("finderResults");
+  if (!root) return;
+  const section = root.closest(".finder");
+  const status = $("finderStatus");
+  const actions = $("finderActions");
+  const more = $("finderMore");
+  const reset = $("finderReset");
+  const state = { who: "", occasion: "", budget: "" };
+  const order = ["u25", "25-50", "50-100", "100-200", "200p"];
+  let limit = 12;
+  const chanukahOn = !!(window.__chanukah && window.__chanukah.on);
+
+  const isCard = (p) => /card/i.test(p.category || "");
+  const isWrap = (p) => /wrap/i.test(p.category || "");
+  // Every occasion is broad: all gifts that match who + budget. Anniversary cards only show for
+  // anniversaries; wedding cards only for the week before the wedding; wedding-only gifts
+  // (Mr & Mrs, bride/groom…) only for the wedding. (Wrapping paper is never in the finder.)
+  function occasionOk(p, occ) {
+    if (!occ) return true;
+    const cat = p.category || "";
+    const label = p.cardLabel || cat;
+    if (isCard(p) && /anniversary/i.test(label)) return occ === "anniversary";
+    if (isCard(p) && /wedding/i.test(label)) return occ === "wedding";
+    if (occ !== "wedding" && p.weddingOnly) return false;
+    return true;
+  }
+  function whoOk(p, who) {
+    if (!who) return true;
+    if (who === "both") return p.gender === "all";
+    return p.gender === who || p.gender === "all";
+  }
+  function match(useBudget = true) {
+    return products.filter((p) => !isWrap(p) && whoOk(p, state.who) && occasionOk(p, state.occasion) &&
+      (!useBudget || !state.budget || state.budget === "any" || p.bandKey === state.budget));
+  }
+  function sortList(list) {
+    return list.sort((a, b) => {
+      // for "anniversary", put the gifts first and the cards after
+      const ca = isCard(a) ? 1 : 0, cb = isCard(b) ? 1 : 0;
+      if (state.occasion !== "anniversary" && ca !== cb) return ca - cb;
+      const wa = state.who && state.who !== "both" && a.gender === state.who ? 0 : 1;
+      const wb = state.who && state.who !== "both" && b.gender === state.who ? 0 : 1;
+      return wa - wb || (b.popularity || 0) - (a.popularity || 0) || (a.order || 0) - (b.order || 0);
+    });
+  }
+  function render() {
+    section.querySelectorAll(".pill[data-who],.pill[data-occasion],.pill[data-budget]").forEach((b) => {
+      const key = b.dataset.who ? "who" : b.dataset.occasion ? "occasion" : "budget";
+      const on = state[key] === (b.dataset[key]);
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    const picked = Object.values(state).filter(Boolean).length;
+    if (!picked) { root.innerHTML = ""; status.textContent = "Tap one in each row — results show up right here."; actions.classList.add("hidden"); return; }
+    let list = sortList(match());
+    let note = "";
+    if (!list.length && state.budget && state.budget !== "any") {
+      // nothing in that exact budget: show the closest budgets instead
+      const i = order.indexOf(state.budget);
+      const near = sortList(match(false)).sort((a, b) => Math.abs(order.indexOf(a.bandKey) - i) - Math.abs(order.indexOf(b.bandKey) - i));
+      list = near.filter((p) => p.bandKey);
+      note = list.length ? " Nothing in that exact budget yet, so here are the closest picks." : "";
+    }
+    const shown = list.slice(0, limit);
+    root.innerHTML = shown.map((p) => renderCard(p, { saved: false })).join("");
+    syncHearts();
+    const need = 3 - picked;
+    status.textContent = list.length
+      ? `${list.length} ${list.length === 1 ? "gift matches" : "gifts match"}.${note}${need > 0 ? ` Tap ${need} more to narrow it down.` : ""}`
+      : "No matches yet. Try another budget or occasion.";
+    if (state.occasion === "anniversary") root.insertAdjacentHTML("beforeend", `<a class="finder-card-note" href="/category/cards.html"><strong>Don’t forget the card</strong><span>Sweet, funny and always clean cards →</span></a>`);
+    actions.classList.toggle("hidden", !picked);
+    more.classList.toggle("hidden", list.length <= limit);
+  }
+  section.addEventListener("click", (event) => {
+    const b = event.target.closest(".pill[data-who],.pill[data-occasion],.pill[data-budget]");
+    if (!b) return;
+    const key = b.dataset.who ? "who" : b.dataset.occasion ? "occasion" : "budget";
+    state[key] = state[key] === b.dataset[key] ? "" : b.dataset[key];
+    limit = 12;
+    render();
+  });
+  more?.addEventListener("click", () => { limit += 12; render(); });
+  reset?.addEventListener("click", () => { state.who = state.occasion = state.budget = ""; limit = 12; render(); });
+  if (!chanukahOn && state.occasion === "chanukah") state.occasion = "";
+  render();
+}
+
+// ========= COLLECTION ROWS (arrow buttons on desktop; swipe on phones) =========
+function initScrollers() {
+  document.querySelectorAll("[data-scroller]").forEach((wrap) => {
+    const rowEl = wrap.querySelector(".product-row");
+    const prev = wrap.querySelector(".prev");
+    const next = wrap.querySelector(".next");
+    if (!rowEl) return;
+    const step = () => Math.max(240, rowEl.clientWidth * 0.85);
+    const update = () => {
+      prev.disabled = rowEl.scrollLeft < 8;
+      next.disabled = rowEl.scrollLeft + rowEl.clientWidth >= rowEl.scrollWidth - 8;
+    };
+    prev?.addEventListener("click", () => rowEl.scrollBy({ left: -step(), behavior: "smooth" }));
+    next?.addEventListener("click", () => rowEl.scrollBy({ left: step(), behavior: "smooth" }));
+    rowEl.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+  });
+}
+
+// ========= HOMEPAGE GIFT REELS (gentle auto-scroll, swipeable; still for reduced motion) =========
+function initReels() {
+  const reels = document.querySelectorAll("[data-reel]");
+  if (!reels.length) return;
+  const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  reels.forEach((reel) => {
+    const track = reel.querySelector(".reel-track");
+    if (!track || still) return;
+    // copies of the cards make the loop seamless (enough to fill wide screens too)
+    const originals = [...track.children];
+    const cycleOf = () => originals.length ? (originals[originals.length - 1].offsetLeft + originals[originals.length - 1].offsetWidth + parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || 0) - originals[0].offsetLeft) : 0;
+    const fill = () => { let guard = 0; while (track.scrollWidth < cycleOf() + reel.clientWidth * 2 && guard++ < 6) originals.forEach((c) => { const k = c.cloneNode(true); k.setAttribute("aria-hidden", "true"); k.tabIndex = -1; track.appendChild(k); }); };
+    fill();
+    const dir = Number(reel.dataset.dir || 1);
+    const speed = Number(reel.dataset.speed || 0.3);
+    let half = cycleOf();
+    let pos = dir < 0 ? half : 0;
+    let paused = false, visible = true, resumeAt = 0, last = 0;
+    reel.scrollLeft = pos;
+    const hold = (ms) => { resumeAt = performance.now() + ms; };
+    reel.addEventListener("pointerdown", () => hold(4000), { passive: true });
+    reel.addEventListener("touchstart", () => hold(4000), { passive: true });
+    reel.addEventListener("wheel", () => hold(3000), { passive: true });
+    reel.addEventListener("mouseenter", () => { paused = true; });
+    reel.addEventListener("mouseleave", () => { paused = false; });
+    reel.addEventListener("focusin", () => { paused = true; });
+    reel.addEventListener("focusout", () => { paused = false; });
+    window.addEventListener("resize", () => { fill(); half = cycleOf(); });
+    if ("IntersectionObserver" in window) new IntersectionObserver((e) => { visible = e[0].isIntersecting; }).observe(reel);
+    const tick = (t) => {
+      const dt = last ? Math.min(50, t - last) : 16; last = t;
+      if (!paused && visible && !document.hidden && t > resumeAt && half > 0) {
+        if (Math.abs(reel.scrollLeft - pos) > 2) pos = reel.scrollLeft; // the visitor swiped
+        pos += dir * speed * (dt / 16.7);
+        if (pos >= half) pos -= half;
+        if (pos <= 0) pos += half;
+        reel.scrollLeft = pos;
+      } else if (t <= resumeAt) pos = reel.scrollLeft;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+// ========= CHANUKAH COUNTDOWN =========
+function initCountdown() {
+  const c = window.__chanukah;
+  if (!c || !c.on || !c.start) return;
+  const days = Math.round((Date.parse(c.start + "T12:00:00Z") - Date.parse(c.today + "T12:00:00Z")) / 86400000);
+  const text = days > 1 ? `${days} days to go` : days === 1 ? "Starts tomorrow night" : days === 0 ? "Starts tonight" : `Night ${Math.min(8, 1 - days)} of 8`;
+  document.querySelectorAll("[data-chanukah-countdown]").forEach((el) => { el.textContent = text; });
 }
 
 // ========= EMAIL CAPTURE =========
@@ -313,10 +495,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   initContactForm();
   initClicks();
   initGallery();
+  initScrollers();
+  initReels();
+  initCountdown();
   syncHearts();
   renderWishlistPage([]);
   const products = await loadProducts();
   window.__products = products;
   renderWishlistPage(products);
+  initFinder(products);
   syncHearts();
 });

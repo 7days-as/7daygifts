@@ -22,6 +22,12 @@ If the sheet can't be reached, or suddenly has fewer than 10 active products, th
 
 `app.js` adds the wish list (saved on the visitor's device), click tracking and the email sign-up on top of the built pages.
 
+## v2 additions
+- `price` column: type a budget band (Under $25, $25–$50, $50–$100, $100–$200, $200+). It shows on cards and product pages and drives the Budget filter, the gift finder and the budget pages (`/budget/…`). Leave blank to show nothing. Exact prices are never shown.
+- `occasions` column: comma list of wedding, anniversary, chanukah, birthday, just because. Used by the gift finder and the Chanukah pages (blank = works for any occasion).
+- Categories "Anniversary Cards" and "Wrapping Paper" have their own pages and homepage spots and are kept out of the main gift mix.
+- Chanukah season: the Chanukah band, homepage banner, nav link and finder option show from 6 weeks before the first night through the 8th day, then hide. Dates live in `CHANUKAH_STARTS` in build.mjs (loaded through 2030) and the same check runs in the browser. Out of season the `/chanukah/` pages stay up but are noindex and left out of the sitemap. Preview any date with `node build.mjs --preview out --date 2027-03-01`, or add `?chanukah=on` / `?chanukah=off` to a page URL.
+
 ## Gift guides fill from the Sheet (`guides` column)
 Each guide section in `data/guides.json` has a short `key`. Type keys in a product's `guides` cell (comma list) and the build adds it to those sections after the hand-picked `products`, most popular first, up to 8 per section (cards and wrapping paper are skipped unless the section is about them; wedding-only items never go into Chanukah sections).
 Keys: day1-sentimental, day2-cozy, day3-everyday, day4-home, day5-travel, day6-fun, day7-special, kallah-keepsakes, kallah-fragrance, kallah-travel, kallah-cozy, chosson-carry, chosson-desk, chosson-travel, chosson-fun, chanukah-wife, chanukah-husband, chanukah-both. Shortcuts: `day1`…`day7`; `chanukah` (picks wife/husband/both from who_is_it_for). Unknown keys are listed in the build log.
@@ -31,3 +37,8 @@ A row with `amazon_enabled` = FALSE, `amazon_asin` empty and `my_url` = the prod
 
 ## Categories and card labels
 The site uses 9 categories: Cards, Gift Wrap, Accessories, Clothing, Home & Kitchen, Gadgets, Hobbies & Games, Travel & Outdoors, Beauty & Fragrance (plus Small Shops, automatic). Older names typed in the Sheet (Kitchen, Guitar, Wrapping Paper, Anniversary Cards…) are mapped to these by `CATEGORY_MAP` in build.mjs. Cards get a small badge from the `card_label` column: Funny, Sweet, Anniversary, Wedding or Just Because. Old category addresses 301 to the new pages (`vercel.json`), and the build also leaves a small redirect page at each old address.
+
+## Ratings, "what's it for" votes and private comments (`reviews.js`)
+Product pages get star ratings (no sign-in; one per browser, can be changed), an occasion vote (7 days before the wedding, Birthday, Anniversary, Just because, or Any occasion — "Most people say: …" shows once 3 people have voted) and a "Send us a private comment" form. Cards show small stars and the top occasion once there is data.
+Everything is stored in Avrohom's Google Sheet "7daygifts Reviews & Votes" (tabs ratings, votes, comments, approved_comments, config) through a Google Apps Script web app in that Sheet (code: `reviews-backend/Code.gs`). Comments are emailed to info@7daygifts.com with an Approve link; nothing written by visitors shows on the site until it is approved (approved ones are in the approved_comments tab — delete a row there to take one down).
+How the site finds the script: the first time the web app runs it writes its /exec address into the Sheet's config tab and into a tiny published Sheet ("7daygifts Reviews - public web address"), and `reviews.js` reads that published address (cached on each device for up to 6 hours). To pin it instead, put the /exec address in `ENDPOINT` at the top of `reviews.js`. Until there is an address, or if the script is down, the site works as before and the widget shows a preview note.

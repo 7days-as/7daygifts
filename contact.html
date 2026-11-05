@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="">
 <head>
   <meta charset="UTF-8" />
   <title>Contact Us | 7 Day Gifts</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Have a gift idea, a question, or feedback? We&#39;d love to hear from you. Email info@7daygifts.com." />
+  <meta name="theme-color" content="#1F3358" />
   
+  <script>window.__chanukah={on:false};</script>
   <link rel="canonical" href="https://7daygifts.com/contact.html" />
   <meta property="og:site_name" content="7 Day Gifts" />
   <meta property="og:type" content="website" />
@@ -14,13 +16,16 @@
   <meta property="og:url" content="https://7daygifts.com/contact.html" />
   <meta property="og:image" content="https://7daygifts.com/hero.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=14" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" />
+  <link rel="stylesheet" href="/style.css?v=16" />
   <link rel="icon" href="/favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
-  <meta name="theme-color" content="#FBF6EA" />
+  <meta name="theme-color" content="#ffffff" />
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"ContactPage","name":"Contact 7 Day Gifts","url":"https://7daygifts.com/contact.html","mainEntity":{"@type":"Organization","name":"7 Day Gifts","url":"https://7daygifts.com/","email":"info@7daygifts.com","telephone":"+1-475-329-4438"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://7daygifts.com/index.html"},{"@type":"ListItem","position":2,"name":"Contact Us","item":"https://7daygifts.com/contact.html"}]}</script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-LF9WFYVSB1"></script>
@@ -32,82 +37,91 @@
   </script>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="page">
+    
     <header class="site-header">
       <div class="header-inner">
         <a href="/index.html" class="logo-wrap" aria-label="7 Day Gifts home">
-          <img src="/logo.png" class="logo-img" alt="7 Day Gifts logo" width="72" height="72" />
+          <img src="/logo-sm.png" class="logo-img" alt="" width="44" height="44" />
           <span class="logo-text">7 Day Gifts</span>
         </a>
         <nav class="main-nav" aria-label="Primary">
           <a href="/index.html" class="nav-link">Home</a>
-          <a href="/gift-gallery.html" class="nav-link">Gift Gallery</a>
+          <a href="/gift-gallery.html" class="nav-link">All Gifts</a>
+          <a href="/gift-finder.html" class="nav-link">Gift Finder</a>
           <a href="/guides/" class="nav-link">Gift Guides</a>
           <a href="/wishlist.html" class="nav-link">Wish List</a>
-          <a href="/contact.html" class="nav-link active">Contact Us</a>
+          <a href="/contact.html" class="nav-link active">Contact</a>
         </nav>
         <div class="header-actions">
-          <button id="menuToggle" class="menu-toggle mobile-only" aria-label="Open menu" aria-controls="mobileMenu">☰</button>
+          <a class="header-heart" href="/wishlist.html" aria-label="Your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></a>
+          <button id="menuToggle" class="menu-toggle" type="button" aria-label="Open menu" aria-controls="mobileMenu" aria-expanded="false"><span></span><span></span><span></span></button>
         </div>
       </div>
     </header>
-    <div class="affiliate-topbar">
-      As an Amazon Associate and affiliate partner, we may earn from qualifying purchases.
-    </div>
     <div id="menuOverlay" class="menu-overlay" hidden></div>
-    <aside id="mobileMenu" class="mobile-menu" aria-label="Mobile menu" aria-hidden="true">
-      <button type="button" id="menuClose" class="menu-close" aria-label="Close menu">✕</button>
-      <a href="/index.html" class="mobile-link"><span>Home</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
-      <a href="/gift-gallery.html" class="mobile-link"><span>Gift Gallery</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
-      <a href="/guides/" class="mobile-link"><span>Gift Guides</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
-      <a href="/wishlist.html" class="mobile-link"><span>Wish List</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
-      <a href="/contact.html" class="mobile-link active" aria-current="page"><span>Contact Us</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
+    <aside id="mobileMenu" class="mobile-menu" aria-label="Menu" aria-hidden="true">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button id="menuClose" class="menu-close" type="button" aria-label="Close menu">×</button>
+      </div>
+      <nav class="mobile-menu-links">
+        <a href="/index.html" class="mobile-link"><span>Home</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
+        <a href="/gift-gallery.html" class="mobile-link"><span>All Gifts</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
+        <a href="/gift-finder.html" class="mobile-link"><span>Gift Finder</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
+        <a href="/guides/" class="mobile-link"><span>Gift Guides</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
+        <a href="/wishlist.html" class="mobile-link"><span>Wish List</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
+        <a href="/contact.html" class="mobile-link active" aria-current="page"><span>Contact</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>
+      </nav>
     </aside>
-    <main class="main-content">
+    <p class="disclosure">As an Amazon Associate we earn from qualifying purchases.</p>
+    <main class="main-content" id="main">
       <section class="section contact-page">
         <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/index.html">Home</a><span class="sep" aria-hidden="true">›</span><span aria-current="page">Contact Us</span></nav>
-        <div class="email-capture-card contact-card">
-          <h1 class="email-capture-title">Contact Us</h1>
-          <p class="email-capture-text">Have a gift idea, a question, or feedback? We'd love to hear from you.</p>
+        <div class="contact-card">
+          <p class="eyebrow">Say hello</p>
+          <h1 class="section-title">Contact Us</h1>
+          <p class="contact-lead">Have a gift idea, a question, or feedback? We'd love to hear from you.</p>
           <p class="contact-direct"><a class="btn-pill btn-primary contact-mail" href="mailto:info@7daygifts.com?subject=Hello%20from%207daygifts.com">Email info@7daygifts.com</a></p>
-          <p class="contact-or">or write it here, and we'll open your email app with your note ready to send:</p>
-          <form id="contactForm" class="email-form contact-form">
-            <label class="email-label" for="contactName">Your name (optional)</label>
-            <input type="text" id="contactName" name="name" class="email-input" autocomplete="name" />
-            <label class="email-label" for="contactTopic">What's it about?</label>
-            <select id="contactTopic" name="topic" class="email-input">
+          <p class="contact-or">Or write it here, and we'll open your email app with your note ready to send:</p>
+          <form id="contactForm" class="contact-form">
+            <label class="contact-label" for="contactName">Your name (optional)</label>
+            <input type="text" id="contactName" name="name" class="contact-input" autocomplete="name" />
+            <label class="contact-label" for="contactTopic">What's it about?</label>
+            <select id="contactTopic" name="topic" class="contact-input">
               <option>A gift idea</option>
               <option>A question</option>
               <option>Feedback</option>
               <option>Something else</option>
             </select>
-            <label class="email-label" for="contactMessage">Message</label>
-            <textarea id="contactMessage" name="message" class="email-input contact-message" rows="5" required></textarea>
-            <button type="submit" class="btn-pill btn-primary email-submit">Write the email</button>
+            <label class="contact-label" for="contactMessage">Message</label>
+            <textarea id="contactMessage" name="message" class="contact-input contact-message" rows="5" required></textarea>
+            <button type="submit" class="btn-pill btn-primary contact-send">Write the email</button>
           </form>
-          <p id="contactDone" class="email-message hidden">Your email app should open with your note. If it didn't, just email us at <a href="mailto:info@7daygifts.com">info@7daygifts.com</a>.</p>
+          <p id="contactDone" class="contact-done hidden">Your email app should open with your note. If it didn't, just email us at <a href="mailto:info@7daygifts.com">info@7daygifts.com</a>.</p>
           <p class="contact-phone">Prefer the phone? Call <a href="tel:14753294438">475-329-4438</a>.</p>
         </div>
       </section>
     </main>
     <footer class="site-footer">
-      <div class="footer-links">
-        <div><div class="footer-heading">Gift guides</div><a href="/guides/7-day-gift-ideas-before-the-wedding.html">7 Day Gifts Before the Wedding</a><a href="/guides/gifts-for-the-kallah.html">Gifts for the Kallah</a><a href="/guides/gifts-for-the-chosson.html">Gifts for the Chosson</a></div>
-        <div><div class="footer-heading">Who it's for</div><a href="/for/her.html">Gifts for her</a><a href="/for/him.html">Gifts for him</a><a href="/for/couples.html">Gifts for either of you</a></div>
-        <div><div class="footer-heading">Say hello</div><a href="/contact.html">Contact us</a><a href="mailto:info@7daygifts.com">info@7daygifts.com</a></div>
-        <div><div class="footer-heading">Categories</div><div class="footer-cats"><a href="/category/accessories.html">Accessories</a><a href="/category/beauty-and-fragrance.html">Beauty &amp; Fragrance</a><a href="/category/cards.html">Cards</a><a href="/category/clothing.html">Clothing</a><a href="/category/gadgets.html">Gadgets</a><a href="/category/gift-wrap.html">Gift Wrap</a><a href="/category/hobbies-and-games.html">Hobbies &amp; Games</a><a href="/category/home-and-kitchen.html">Home &amp; Kitchen</a><a href="/category/travel-and-outdoors.html">Travel &amp; Outdoors</a></div></div>
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="/index.html" class="logo-wrap footer-logo"><img src="/logo-sm.png" alt="" width="40" height="40" loading="lazy" /><span class="logo-text">7 Day Gifts</span></a>
+          <p>Thoughtful gift ideas for the seven days before the wedding, and every anniversary after.</p>
+          <p class="footer-contact"><a href="mailto:info@7daygifts.com">info@7daygifts.com</a><br /><a href="tel:14753294438">475-329-4438</a></p>
+        </div>
+        <div class="footer-col"><div class="footer-heading">Shop</div><a href="/gift-gallery.html">All gifts</a><a href="/gift-finder.html">Gift finder</a><a href="/for/her.html">Gifts for her</a><a href="/for/him.html">Gifts for him</a><a href="/for/couples.html">For either of you</a><a href="/budget/under-50.html">Under $50</a><a href="/contact.html">Contact us</a></div>
+        <div class="footer-col"><div class="footer-heading">Gift guides</div><a href="/guides/7-day-gift-ideas-before-the-wedding.html">7 Day Gifts Before the Wedding</a><a href="/guides/gifts-for-the-kallah.html">Gifts for the Kallah</a><a href="/guides/gifts-for-the-chosson.html">Gifts for the Chosson</a></div>
+        <div class="footer-col footer-col-cats"><div class="footer-heading">Categories</div><div class="footer-cats"><a href="/category/accessories.html">Accessories</a><a href="/category/beauty-and-fragrance.html">Beauty &amp; Fragrance</a><a href="/category/cards.html">Cards</a><a href="/category/clothing.html">Clothing</a><a href="/category/gadgets.html">Gadgets</a><a href="/category/gift-wrap.html">Gift Wrap</a><a href="/category/hobbies-and-games.html">Hobbies &amp; Games</a><a href="/category/home-and-kitchen.html">Home &amp; Kitchen</a><a href="/category/travel-and-outdoors.html">Travel &amp; Outdoors</a></div></div>
       </div>
-      <div class="footer-inner">
+      <div class="footer-bottom">
         <span>© 2026 7DayGifts.com</span>
-        <span>Phone: <a href="tel:14753294438">475-329-4438</a></span>
-        <span>Email: <a href="mailto:info@7daygifts.com">info@7daygifts.com</a></span>
-        <span><a href="/contact.html">Contact us</a></span>
-      </div>
-      <div class="footer-disclosure">
-        When you buy through our links, we may earn a small commission. Prices and availability are set by Amazon (or by the shop, for Small Shops gifts) and can change, so check the current price before you buy.
+        <span>As an Amazon Associate we earn from qualifying purchases. Prices and availability are set by Amazon (or by the shop, for Small Shops gifts) and can change.</span>
       </div>
     </footer>
   </div>
-  <script src="/app.js?v=11"></script>
+  <script src="/app.js?v=16"></script>
+  <script src="/reviews.js?v=16" defer></script>
 </body>
 </html>
