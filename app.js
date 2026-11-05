@@ -2,382 +2,202 @@
 const WISHLIST_KEY = "7DG_WISHLIST_LOCAL";
 const EMAIL_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVRgumxRdyeCgWhTqvo_tpM_x_hTMrCJQbrltrMr1hJ-LpnE5DLIXduDrrDlIVp2OT/exec";
 const CLICK_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyDvT1LzVG8eccyXwU7-7HkuQuq0oKyff0o9UYyq_bnJsLfJwyKCqSJUNnK5uGuTCdz/exec";
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vRIP3mbNKwA1vi20Aufe7uKOBp-9HYV1kIot6FNnbZyPG7IT9xazlOqA9jii5b9lLuJBO6ydMNiyzSi/pub?gid=0&single=true&output=csv";
+// Product pages are pre-built from the Google Sheet by build.mjs; this file adds the
+// wish list, click tracking, email sign-up and gallery filters on top of that HTML.
+const PRODUCTS_URL = "/products.json";
+// A preview copy of the site never posts clicks or emails to the real sheets.
+const IS_PREVIEW = !!document.querySelector('meta[name="7dg-preview"]');
 
 // ========= HELPERS =========
 const $ = (id) => document.getElementById(id);
 
 function safeParse(value, fallback) {
-  try {
-    return JSON.parse(value) ?? fallback;
-  } catch {
-    return fallback;
-  }
+  try { return JSON.parse(value) ?? fallback; } catch { return fallback; }
 }
 
 function escapeHtml(value) {
   return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
-function normalizeGender(value) {
-  const v = String(value || "").trim().toLowerCase();
-
-  if (["him", "for him", "male", "man", "men", "groom"].includes(v)) return "him";
-  if (["her", "for her", "female", "woman", "women", "bride", "wife", "fiancee", "fiancé", "fiance"].includes(v)) return "her";
-  return "all";
-}
-
-function formatPrice(price) {
-  const n = Number(price);
-  if (!Number.isFinite(n) || n <= 0) return "";
-  return `$${n}`;
-}
-
-function parseCSVLine(line) {
-  const result = [];
-  let current = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const next = line[i + 1];
-
-    if (char === '"' && inQuotes && next === '"') {
-      current += '"';
-      i++;
-      continue;
-    }
-
-    if (char === '"') {
-      inQuotes = !inQuotes;
-      continue;
-    }
-
-    if (char === "," && !inQuotes) {
-      result.push(current);
-      current = "";
-      continue;
-    }
-
-    current += char;
-  }
-
-  result.push(current);
-  return result.map((item) => item.trim());
-}
 function logProductClick(productId) {
-  if (!productId || !CLICK_SCRIPT_URL) return;
-
+  if (!productId || !CLICK_SCRIPT_URL || IS_PREVIEW) return;
   fetch(CLICK_SCRIPT_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify({
-      action: "logClick",
-      product_id: productId
-    })
-  }).catch((error) => {
-    console.error("Error logging click:", error);
-  });
+    keepalive: true,
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "logClick", product_id: productId })
+  }).catch((error) => console.error("Error logging click:", error));
 }
+
 // ========= MENU =========
 function initMenu() {
   const btn = $("menuToggle");
   const menu = $("mobileMenu");
-
   if (!btn || !menu) return;
-
-  btn.addEventListener("click", () => {
-    menu.classList.toggle("open");
+  btn.addEventListener("click", () => menu.classList.toggle("open"));
+  menu.addEventListener("click", (event) => {
+    if (event.target === menu) menu.classList.remove("open");
   });
-
-  menu.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      menu.classList.remove("open");
-    });
-  });
+  menu.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => menu.classList.remove("open")));
 }
 
 // ========= WISHLIST =========
-function getWishlist() {
-  return safeParse(localStorage.getItem(WISHLIST_KEY), []);
-}
-
-function setWishlist(list) {
-  localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
-}
-
-function isSaved(productId) {
-  return getWishlist().some((item) => item.id === productId);
-}
+function getWishlist() { return safeParse(localStorage.getItem(WISHLIST_KEY), []); }
+function setWishlist(list) { localStorage.setItem(WISHLIST_KEY, JSON.stringify(list)); }
+function isSaved(productId) { return getWishlist().some((item) => item.id === productId); }
 
 function toggleWishlist(product) {
   const list = getWishlist();
   const index = list.findIndex((item) => item.id === product.id);
-
-  if (index >= 0) {
-    list.splice(index, 1);
-  } else {
-    list.push(product);
-  }
-
+  if (index >= 0) list.splice(index, 1); else list.push(product);
   setWishlist(list);
 }
 
-// ========= PRODUCTS =========
+function productFromCard(id) {
+  // enough to show it on the wish list even if products.json is unavailable
+  const card = document.querySelector(`.product-card[data-id="${CSS.escape(id)}"], .product-detail[data-id="${CSS.escape(id)}"]`);
+  if (!card) return { id };
+  const link = card.querySelector(".product-link")?.getAttribute("href") || location.pathname;
+  return {
+    id,
+    title: card.querySelector(".product-title, .product-detail-title")?.textContent.trim() || "",
+    image: card.querySelector(".product-image")?.getAttribute("src") || "",
+    url: card.querySelector(".amazon-link")?.getAttribute("href") || "#",
+    slug: (link.match(/\/gifts\/([^/]+)\.html/) || [])[1] || "",
+    category: card.dataset.category || "",
+    gender: card.dataset.gender || "all"
+  };
+}
+
+function syncHearts() {
+  document.querySelectorAll(".heart[data-id]").forEach((btn) => {
+    const saved = isSaved(btn.dataset.id);
+    btn.classList.toggle("active", saved);
+    btn.setAttribute("aria-pressed", saved ? "true" : "false");
+    if (btn.classList.contains("heart-btn")) btn.textContent = saved ? "♥ Saved" : "♥ Save";
+  });
+}
+
+// ========= CLICKS (one handler for the whole page) =========
+function initClicks() {
+  document.addEventListener("click", (event) => {
+    const heart = event.target.closest(".heart[data-id]");
+    if (heart) {
+      event.preventDefault();
+      event.stopPropagation();
+      const id = heart.dataset.id;
+      const product = (window.__products || []).find((p) => p.id === id) || productFromCard(id);
+      toggleWishlist(product);
+      syncHearts();
+      if ($("wishlist-products")) renderWishlistPage(window.__products || []);
+      return;
+    }
+    const amazon = event.target.closest(".amazon-link[data-id]");
+    if (amazon) logProductClick(amazon.dataset.id);
+  });
+}
+
+// ========= PRODUCT DATA =========
 async function loadProducts() {
   try {
-    const response = await fetch(SHEET_URL);
-    const csvText = await response.text();
-
-    const lines = csvText
-      .split(/\r?\n/)
-      .filter((line) => line.trim().length > 0);
-
-    if (!lines.length) return [];
-
-    const headers = parseCSVLine(lines[0]);
-    const rows = lines.slice(1).map(parseCSVLine);
-
-    return rows
-      .map((row, index) => {
-        const obj = {};
-        headers.forEach((header, i) => {
-          obj[header.trim()] = row[i] ?? "";
-        });
-
-        const asin = String(obj.amazon_asin || "").trim();
-        const id = String(obj.product_id || "").trim() || asin || `product-${index + 1}`;
-        const image = String(obj.photo_url || "").trim();
-
-        return {
-          id,
-          asin,
-          title: String(obj.site_title || "Untitled product").trim(),
-          price: Number(obj.price) || 0,
-          image,
-          url: asin ? `https://www.amazon.com/dp/${asin}?tag=7daygifts-20` : "#",
-          category: String(obj.categories || "").trim(),
-          gender: normalizeGender(obj.who_is_it_for),
-          popularity: Number(obj.click_count) || 0,
-          addedAt:
-            String(obj.added_at || "").trim() ||
-            String(obj.created_at || "").trim() ||
-            String(obj.date_added || "").trim() ||
-            `2026-01-${String((index % 28) + 1).padStart(2, "0")}`,
-          status: String(obj.status || "").trim().toLowerCase(),
-          hasImage: !!image
-        };
-      })
-      .filter((product) => product.status === "active");
+    const response = await fetch(PRODUCTS_URL, { cache: "no-cache" });
+    if (!response.ok) throw new Error("products.json " + response.status);
+    return await response.json();
   } catch (error) {
     console.error("Error loading products:", error);
     return [];
   }
 }
 
-// ========= PRODUCT CARDS =========
-function renderProductCard(product) {
-  const title = escapeHtml(product.title);
-  const url = escapeHtml(product.url);
-  const id = escapeHtml(product.id);
-  const price = formatPrice(product.price);
-  const hasImage = Boolean(product.image && product.image.trim());
-
-  return `
-    <article class="product-card" data-url="${url}" data-id="${id}">
-      <button
-        type="button"
-        class="heart ${isSaved(product.id) ? "active" : ""}"
-        data-id="${id}"
-        aria-label="Save ${title}"
-      >♥</button>
-
-      <div class="product-image-wrap ${hasImage ? "" : "image-missing"}">
-        ${
-          hasImage
-            ? `<img
-                class="product-image"
-                src="${escapeHtml(product.image)}"
-                alt="${title}"
-                loading="lazy"
-                onerror="this.style.display='none'; this.parentElement.classList.add('image-missing');"
-              />`
-            : ""
-        }
-        <div class="image-fallback">Image coming soon</div>
-      </div>
-
-      <div class="product-card-body">
-        <h3 class="product-title">${title}</h3>
-        <div class="product-price">${price}</div>
-      </div>
-    </article>
-  `;
-}
-function wireCardButtons(container, sourceProducts) {
-  if (!container) return;
-
-  container.querySelectorAll(".product-card").forEach((card) => {
-    card.addEventListener("click", (event) => {
-      if (event.target.closest(".heart")) return;
-
-      const id = card.dataset.id;
-      const product = sourceProducts.find((p) => p.id === id);
-      if (!product) return;
-
-      logProductClick(product.id);
-
-      if (product.url && product.url !== "#") {
-        window.open(product.url, "_blank", "noopener");
-      }
-    });
-  });
-
-  container.querySelectorAll(".heart").forEach((btn) => {
-    btn.addEventListener("click", (event) => {
-      event.stopPropagation();
-
-      const id = btn.dataset.id;
-      const product = sourceProducts.find((p) => p.id === id);
-      if (!product) return;
-
-      toggleWishlist(product);
-      refreshAllUI();
-    });
-  });
-}
-// ========= HOME =========
-function renderHomeTrending(products) {
-  const holder = $("home-trending");
-  if (!holder) return;
-
-  const top = [...products]
-    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
-    .slice(0, 7);
-
-  holder.innerHTML = top.map(renderProductCard).join("");
-  wireCardButtons(holder, products);
-}
-
 // ========= WISHLIST PAGE =========
+function renderCard(p) {
+  const title = escapeHtml(p.title || "Saved gift");
+  const href = p.slug ? `/gifts/${encodeURIComponent(p.slug)}.html` : escapeHtml(p.url || "#");
+  const img = p.image
+    ? `<img class="product-image" src="${escapeHtml(p.image)}" alt="${title}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
+    : "";
+  return `<article class="product-card" data-id="${escapeHtml(p.id)}">
+    <button type="button" class="heart active" data-id="${escapeHtml(p.id)}" aria-label="Remove ${title} from your wish list">♥</button>
+    <a class="product-link" href="${href}">
+      <div class="product-image-wrap ${p.image ? "" : "image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
+      <h3 class="product-title">${title}</h3>
+    </a>
+    <div class="product-card-body">
+      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="sponsored nofollow noopener" data-id="${escapeHtml(p.id)}">Check price on Amazon</a>
+    </div>
+  </article>`;
+}
+
 function renderWishlistPage(products) {
   const grid = $("wishlist-products");
-  const subtitle = $("wishlistSubtitle");
-  const emptyEl = $("wishlistEmpty");
-
   if (!grid) return;
-
-  if (subtitle) {
-    subtitle.textContent = "Saved on this device.";
-  }
-
-  const savedItems = getWishlist();
-
-  if (!savedItems.length) {
+  const emptyEl = $("wishlistEmpty");
+  const saved = getWishlist();
+  if (!saved.length) {
     grid.innerHTML = "";
     emptyEl?.classList.remove("hidden");
     return;
   }
-
-  const fullItems = savedItems.map((saved) => {
-    return products.find((p) => p.id === saved.id) || saved;
-  });
-
   emptyEl?.classList.add("hidden");
-  grid.innerHTML = fullItems.map(renderProductCard).join("");
-  wireCardButtons(grid, fullItems);
+  const items = saved.map((s) => products.find((p) => p.id === s.id) || s);
+  grid.innerHTML = items.map(renderCard).join("");
 }
 
-// ========= GALLERY =========
-function getGalleryFilters() {
-  const gender =
-    document.querySelector('#genderPills [data-gender].active')?.dataset.gender || "all";
-
-  const sort =
-    document.querySelector(".sort-btn.active")?.dataset.sort || "popular";
-
-  const category = $("categoryFilter")?.value || "all";
-
-  return { gender, sort, category };
-}
-
-function renderGalleryPage(products) {
+// ========= GALLERY (filters the pre-built cards) =========
+function initGallery() {
   const grid = $("gallery-products");
   if (!grid) return;
-
-  const { gender, sort, category } = getGalleryFilters();
-
-  let list = [...products];
-
-  if (gender !== "all") {
-    list = list.filter((p) => p.gender === gender || p.gender === "all");
-  }
-
-  if (category !== "all") {
-    list = list.filter((p) => p.category === category);
-  }
-
-  if (sort === "popular") {
-    list.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
-  }
-
-  if (sort === "recent") {
-    list.sort((a, b) => {
-      const aDate = new Date(a.addedAt || 0).getTime();
-      const bDate = new Date(b.addedAt || 0).getTime();
-      return bDate - aDate;
-    });
-  }
-
-  if (!list.length) {
-    grid.innerHTML = `<div class="callout"><p>No gifts match this filter yet.</p></div>`;
-    return;
-  }
-
-  grid.innerHTML = list.map(renderProductCard).join("");
-  wireCardButtons(grid, products);
-}
-
-function initGalleryUI(products) {
+  const cards = [...grid.querySelectorAll(".product-card")];
   const genderWrap = $("genderPills");
   const sortRow = document.querySelector(".sort-row");
   const categoryFilter = $("categoryFilter");
+  const empty = $("galleryEmpty");
+
+  const params = new URLSearchParams(location.search);
+  const startGender = params.get("for");
+  if (startGender && genderWrap?.querySelector(`[data-gender="${CSS.escape(startGender)}"]`)) {
+    genderWrap.querySelectorAll("[data-gender]").forEach((b) => b.classList.toggle("active", b.dataset.gender === startGender));
+  }
+  const startCat = params.get("category");
+  if (startCat && categoryFilter && [...categoryFilter.options].some((o) => o.value === startCat)) categoryFilter.value = startCat;
+
+  function apply() {
+    const gender = genderWrap?.querySelector("[data-gender].active")?.dataset.gender || "all";
+    const sort = sortRow?.querySelector(".sort-btn.active")?.dataset.sort || "popular";
+    const category = categoryFilter?.value || "all";
+    const sorted = [...cards].sort((a, b) =>
+      sort === "recent"
+        ? Number(b.dataset.order) - Number(a.dataset.order)
+        : Number(b.dataset.pop) - Number(a.dataset.pop) || Number(a.dataset.order) - Number(b.dataset.order));
+    let shown = 0;
+    sorted.forEach((card) => {
+      const okGender = gender === "all" || card.dataset.gender === gender || card.dataset.gender === "all";
+      const okCat = category === "all" || card.dataset.category === category;
+      card.hidden = !(okGender && okCat);
+      if (!card.hidden) shown++;
+      grid.appendChild(card);
+    });
+    empty?.classList.toggle("hidden", shown > 0);
+  }
 
   genderWrap?.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-gender]");
     if (!btn) return;
-
-    genderWrap.querySelectorAll("[data-gender]").forEach((b) => {
-      b.classList.remove("active");
-    });
-
+    genderWrap.querySelectorAll("[data-gender]").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-    renderGalleryPage(products);
+    apply();
   });
-
   sortRow?.addEventListener("click", (event) => {
     const btn = event.target.closest(".sort-btn");
     if (!btn) return;
-
-    sortRow.querySelectorAll(".sort-btn").forEach((b) => {
-      b.classList.remove("active");
-    });
-
+    sortRow.querySelectorAll(".sort-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
-    renderGalleryPage(products);
+    apply();
   });
-
-  categoryFilter?.addEventListener("change", () => {
-    renderGalleryPage(products);
-  });
+  categoryFilter?.addEventListener("change", apply);
+  apply();
 }
 
 // ========= EMAIL CAPTURE =========
@@ -385,39 +205,24 @@ function initEmailForm() {
   const form = $("emailForm");
   const success = $("emailSuccess");
   const error = $("emailError");
-
   if (!form) return;
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-
     const email = $("emailInput")?.value?.trim();
     const weddingDate = $("weddingDate")?.value?.trim() || "";
     const company = $("companyField")?.value?.trim() || "";
-
     if (!email) return;
-
     success?.classList.add("hidden");
     error?.classList.add("hidden");
-
+    if (IS_PREVIEW) { $("emailPreview")?.classList.remove("hidden"); return; }
     try {
       const response = await fetch(EMAIL_SCRIPT_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify({
-          email,
-          wedding_date: weddingDate,
-          source: "7daygifts_site",
-          company
-        })
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ email, wedding_date: weddingDate, source: "7daygifts_site", company })
       });
-
-      if (!response.ok) {
-        throw new Error("Request failed");
-      }
-
+      if (!response.ok) throw new Error("Request failed");
       form.reset();
       success?.classList.remove("hidden");
     } catch (err) {
@@ -427,25 +232,16 @@ function initEmailForm() {
   });
 }
 
-// ========= GLOBAL REFRESH =========
-function refreshAllUI() {
-  const products = window.__products || [];
-  renderHomeTrending(products);
-  renderGalleryPage(products);
-  renderWishlistPage(products);
-}
-
 // ========= INIT =========
 document.addEventListener("DOMContentLoaded", async () => {
   initMenu();
   initEmailForm();
-
+  initClicks();
+  initGallery();
+  syncHearts();
+  renderWishlistPage([]);
   const products = await loadProducts();
   window.__products = products;
-
-  if ($("gallery-products")) {
-    initGalleryUI(products);
-  }
-
-  refreshAllUI();
+  renderWishlistPage(products);
+  syncHearts();
 });
