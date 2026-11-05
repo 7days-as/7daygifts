@@ -950,3 +950,8 @@ html.menu-locked, html.menu-locked body{ overflow:hidden; }
 /* ---------- Guide cards with photos ---------- */
 .guide-card-photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:-4px -4px 10px;}
 .guide-card-photos img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#F4F5F8;}
+
+/* ---------- Slimmer phone menu (Nov 4, 2026: 'much thinner, to the right') ---------- */
+.mobile-menu{width:56%;max-width:230px;min-width:190px;padding:72px 14px 16px;border-radius:18px 0 0 18px;}
+.mobile-menu a{padding:10px 10px;margin:4px 0;font-size:15px;}
+.menu-close{top:14px;right:12px;width:36px;height:36px;font-size:16px;}
