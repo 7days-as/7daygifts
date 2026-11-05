@@ -934,3 +934,19 @@ html.menu-locked, html.menu-locked body{ overflow:hidden; }
   .guide-intro p,.guide-section>p{font-size:16px;}
   .btn-amazon{font-size:13px;padding:8px 8px;}
 }
+
+/* ---------- Heart icon only (Nov 4, 2026) ---------- */
+.heart{border:none !important;background:transparent !important;box-shadow:none !important;width:40px;height:40px;padding:6px;border-radius:0;color:#e75480;}
+.heart .heart-icon{width:26px;height:26px;display:block;fill:rgba(255,255,255,.85);stroke:#e75480;stroke-width:1.8;transition:fill .15s ease,transform .15s ease;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.25));}
+.heart:hover{transform:none;}
+.heart:hover .heart-icon{transform:scale(1.08);}
+.heart.active{background:transparent !important;border:none !important;color:#e75480;}
+.heart.active .heart-icon{fill:#e75480;}
+.heart-btn{position:static;width:48px;height:48px;padding:6px;border-radius:0;}
+.heart-btn .heart-icon{width:32px;height:32px;filter:none;fill:#fff;}
+.heart-btn.active{background:transparent !important;color:#e75480;}
+.heart-btn.active .heart-icon{fill:#e75480;}
+@media (max-width:640px){ .heart{width:38px;height:38px;top:8px;right:8px;} }
+/* ---------- Guide cards with photos ---------- */
+.guide-card-photos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:-4px -4px 10px;}
+.guide-card-photos img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#F4F5F8;}

@@ -191,7 +191,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=7" />
+  <link rel="stylesheet" href="/style.css?v=8" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
@@ -250,19 +250,25 @@ function footer(ctx) {
       </div>
     </footer>
   </div>
-  <script src="/app.js?v=7"></script>
+  <script src="/app.js?v=8"></script>
 </body>
 </html>
 `;
 }
 const shortGuide = (t) => t.split(":")[0];
+function guideCard(ctx, g) {
+  const ids = [...new Set(g.sections.flatMap((s) => s.products))];
+  const pics = ids.map((id) => ctx.products.find((p) => p.id === id)).filter((p) => p && p.image).slice(0, 4);
+  const strip = pics.length ? `<span class="guide-card-photos">${pics.map((p) => `<img src="${esc(p.image)}" alt="" loading="lazy" width="160" height="160" onerror="this.style.visibility='hidden'" />`).join("")}</span>` : "";
+  return `<a class="guide-card" href="/guides/${g.slug}.html">${strip}<span class="guide-card-title">${esc(g.title)}</span><span class="guide-card-text">${esc(g.description)}</span></a>`;
+}
 
 function card(p, { headingTag = "h3" } = {}) {
   const img = p.image
     ? `<img class="product-image" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" width="500" height="500" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
   return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}" data-band="${esc(p.band)}">
-  <button type="button" class="heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list">♥</button>
+  <button type="button" class="heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
   <a class="product-link" href="/gifts/${p.slug}.html">
     <div class="product-image-wrap${p.image ? "" : " image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
     <${headingTag} class="product-title">${esc(p.name)}</${headingTag}>
@@ -342,7 +348,7 @@ function pageHome(ctx) {
       <section class="section">
         ${sectionHeader("Gift guides", "Short, practical guides to help you plan.")}
         <div class="guide-list">
-          ${ctx.guides.map((g) => `<a class="guide-card" href="/guides/${g.slug}.html"><span class="guide-card-title">${esc(g.title)}</span><span class="guide-card-text">${esc(g.description)}</span></a>`).join("\n          ")}
+          ${ctx.guides.map((g) => guideCard(ctx, g)).join("\n          ")}
         </div>
       </section>
 
@@ -411,7 +417,7 @@ function pageWishlist(ctx) {
       <section class="section">
         ${sectionHeader("Your Wish List", '<span id="wishlistSubtitle">Saved on this device.</span>', "h1")}
         <div id="wishlistEmpty" class="callout hidden">
-          <p>Your wish list is empty. Tap the ♥ on any gift to save it here.</p>
+          <p>Your wish list is empty. Tap the heart on any gift to save it here.</p>
           <p><a class="btn-pill btn-primary" href="/gift-gallery.html">Browse the gallery</a></p>
         </div>
         <div class="product-grid" id="wishlist-products"></div>
@@ -452,7 +458,7 @@ function pageProduct(ctx, p) {
             </dl>
             <div class="product-actions">
               <a class="btn-pill btn-primary btn-big amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">${priceLabel(p)}</a>
-              <button type="button" class="btn-pill btn-ghost heart-btn heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list">♥ Save</button>
+              <button type="button" class="heart heart-btn" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
             </div>
             ${p.title !== p.name ? `<p class="product-note">Amazon listing: ${esc(p.title)}</p>` : ""}
             <p class="product-note">Price and delivery are shown on Amazon and can change. As an Amazon Associate we may earn from qualifying purchases.</p>
@@ -533,7 +539,7 @@ function pageGuides(ctx) {
         ${bc.html}
         ${sectionHeader("Gift Guides", "Short, practical guides to help you choose.", "h1")}
         <div class="guide-list">
-          ${ctx.guides.map((g) => `<a class="guide-card" href="/guides/${g.slug}.html"><span class="guide-card-title">${esc(g.title)}</span><span class="guide-card-text">${esc(g.description)}</span></a>`).join("\n          ")}
+          ${ctx.guides.map((g) => guideCard(ctx, g)).join("\n          ")}
         </div>
       </section>` + footer(ctx);
 }

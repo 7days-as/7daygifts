@@ -100,7 +100,8 @@ function syncHearts() {
     const saved = isSaved(btn.dataset.id);
     btn.classList.toggle("active", saved);
     btn.setAttribute("aria-pressed", saved ? "true" : "false");
-    if (btn.classList.contains("heart-btn")) btn.textContent = saved ? "♥ Saved" : "♥ Save";
+    const label = btn.getAttribute("aria-label") || "";
+    btn.setAttribute("aria-label", saved ? label.replace(/^Save /, "Remove ").replace(/ to your wish list$/, " from your wish list") : label.replace(/^Remove /, "Save ").replace(/ from your wish list$/, " to your wish list"));
   });
 }
 
@@ -143,7 +144,7 @@ function renderCard(p) {
     ? `<img class="product-image" src="${escapeHtml(p.image)}" alt="${title}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
   return `<article class="product-card" data-id="${escapeHtml(p.id)}">
-    <button type="button" class="heart active" data-id="${escapeHtml(p.id)}" aria-label="Remove ${title} from your wish list">♥</button>
+    <button type="button" class="heart active" data-id="${escapeHtml(p.id)}" aria-label="Remove ${title} from your wish list"><svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
     <a class="product-link" href="${href}">
       <div class="product-image-wrap ${p.image ? "" : "image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
       <h3 class="product-title">${title}</h3>
