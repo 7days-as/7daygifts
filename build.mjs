@@ -107,8 +107,8 @@ function normalizeBand(value) {
 
 // ---------- wedding-specific items never show as Chanukah gifts (Avrohom, Nov 4: "Chanukah is not a wedding") ----------
 const WEDDING_ONLY_RX = /\bmr\.?\s*(?:&|and)\s*mrs\b|\bmr\b.*\bmrs\b|\bbride\b|\bgroom\b|\bnewly ?weds?\b|\bkallah\b|\bchosson\b|\bwedding (?:card|day|gift)\b/i;
-function weddingSpecific(title, desc, category) {
-  if (/^(anniversary cards|wedding cards)$/i.test(String(category || "").trim())) return true;
+function weddingSpecific(title, desc, category, cardLabel = "") {
+  if (/^(anniversary cards|wedding cards)$/i.test(String(category || "").trim()) || /^(anniversary|wedding)$/i.test(cardLabel)) return true;
   return WEDDING_ONLY_RX.test(`${title || ""} ${desc || ""}`);
 }
 // ---------- occasions (comma list in the sheet's `occasions` column) ----------
@@ -134,7 +134,7 @@ function parseOccasions(value) {
 }
 
 // Cards and wrapping paper live in their own sections, not in the main gift mix.
-const SIDE_CATEGORIES = ["anniversary cards", "wrapping paper"];
+const SIDE_CATEGORIES = ["cards", "gift wrap", "anniversary cards", "wrapping paper"];
 const isCardOrWrap = (p) => /card|wrap/i.test(p.category);
 
 // Amazon image URLs carry a size code; ask for a small copy for cards (faster on phones).
@@ -166,6 +166,42 @@ function chanukahSeason(today = (args.includes("--date") ? args[args.indexOf("--
   return { on, start, year: start.slice(0, 4), pretty };
 }
 const SEASON_SCRIPT = `(function(){var D=${JSON.stringify(CHANUKAH_STARTS)},B=${SEASON_DAYS_BEFORE},A=${SEASON_DAYS_AFTER};function add(s,n){var d=new Date(s+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}var t;try{t=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}catch(e){t=new Date().toISOString().slice(0,10)}var q=location.search.match(/[?&]chanukah=(on|off)/);var s=null,on=false;for(var i=0;i<D.length;i++){if(t<=add(D[i],A)){s=D[i];break}}if(s)on=t>=add(s,-B);if(q)on=q[1]=="on";var h=document.documentElement;h.classList.toggle("is-chanukah",on);window.__chanukah={on:on,start:s,today:t};var m=document.querySelector('meta[name="robots"][data-seasonal]');if(m)m.setAttribute("content",on?"index, follow":"noindex, follow")})();`;
+
+// ---------- categories (9 main ones; older names in the Sheet still map to them) ----------
+const CATEGORY_MAP = {
+  "anniversary cards": "Cards", "wedding cards": "Cards", "funny cards": "Cards", "nice cards": "Cards", "just because cards": "Cards", "card": "Cards",
+  "wrapping paper": "Gift Wrap", "wrap": "Gift Wrap", "gift wrap & tags": "Gift Wrap",
+  "writing": "Accessories",
+  "home": "Home & Kitchen", "kitchen": "Home & Kitchen", "food": "Home & Kitchen", "home and kitchen": "Home & Kitchen",
+  "guitar": "Hobbies & Games", "pickleball": "Hobbies & Games", "games": "Hobbies & Games", "funny": "Hobbies & Games",
+  "travel": "Travel & Outdoors", "outdoors": "Travel & Outdoors",
+  "cosmetics": "Beauty & Fragrance", "cologne & perfume": "Beauty & Fragrance", "fragrance": "Beauty & Fragrance", "beauty": "Beauty & Fragrance",
+};
+const LABEL_FROM_OLD = { "anniversary cards": "Anniversary", "wedding cards": "Wedding", "funny cards": "Funny", "nice cards": "Sweet", "just because cards": "Just Because" };
+const CARD_LABELS = ["Funny", "Sweet", "Anniversary", "Wedding", "Just Because"];
+const normalizeCategory = (raw) => { const k = String(raw || "").trim().replace(/\s+/g, " "); return CATEGORY_MAP[k.toLowerCase()] || k; };
+function normalizeCardLabel(raw, oldCategory) {
+  const s = String(raw || "").trim().replace(/\s+/g, " ");
+  return CARD_LABELS.find((l) => l.toLowerCase() === s.toLowerCase()) || s || LABEL_FROM_OLD[String(oldCategory || "").trim().toLowerCase()] || "";
+}
+// old category pages and where they live now (301s in vercel.json; the build also leaves a small redirect page)
+const OLD_CATEGORY_SLUGS = {
+  "anniversary-cards": "cards", "wedding-cards": "cards", "funny-cards": "cards", "nice-cards": "cards", "just-because-cards": "cards",
+  "wrapping-paper": "gift-wrap", "writing": "accessories", "home": "home-and-kitchen", "kitchen": "home-and-kitchen", "food": "home-and-kitchen",
+  "guitar": "hobbies-and-games", "pickleball": "hobbies-and-games", "games": "hobbies-and-games", "funny": "hobbies-and-games",
+  "travel": "travel-and-outdoors", "outdoors": "travel-and-outdoors", "cosmetics": "beauty-and-fragrance", "cologne-and-perfume": "beauty-and-fragrance",
+};
+const redirectPage = (to) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>This page moved · 7 Day Gifts</title><meta name="robots" content="noindex, follow"><link rel="canonical" href="${SITE}${to}"><meta http-equiv="refresh" content="0; url=${to}"><script>location.replace(${JSON.stringify(to)})</script></head><body><p>This page moved: <a href="${to}">${to}</a></p></body></html>\n`;
+async function writeCategoryRedirects(categories) {
+  const live = new Set(categories.map((c) => c.slug));
+  let n = 0;
+  for (const [from, to] of Object.entries(OLD_CATEGORY_SLUGS)) {
+    if (live.has(from) || !live.has(to)) continue;
+    await writeOut(`category/${from}.html`, redirectPage(`/category/${to}.html`)); n++;
+  }
+  return n;
+}
+const cardLabelBadge = (p) => (p.cardLabel ? `<span class="card-label">${esc(p.cardLabel)}</span>` : "");
 
 // ---------- shops: products that are not on Amazon ----------
 // A Sheet row with amazon_enabled = FALSE and a my_url that is not an Amazon link links straight to
@@ -280,16 +316,18 @@ async function loadProducts() {
       while (used.has(slug)) slug = `${base}-${n++}`;
       used.add(slug); slugLock[id] = slug;
     }
-    const category = String(o.categories ?? o["categories "] ?? "").trim();
+    const rawCategory = String(o.categories ?? o["categories "] ?? "").trim();
+    const category = normalizeCategory(rawCategory);
+    const cardLabel = /card/i.test(category) ? normalizeCardLabel(o.card_label, rawCategory) : "";
     const image = cleanImage(o.photo_url);
     const band = normalizeBand(o.price);
     products.push({
-      id, asin, title, name, slug, url, shop, rel,
+      id, asin, title, name, slug, url, shop, rel, cardLabel,
       guides: parseGuideTags(o.guides),
       image, thumb: sizedImage(image, 400), big: sizedImage(image, 800),
       band: band ? band.label : "", bandKey: band ? band.key : "",
-      occasions: weddingSpecific(title, o.site_description, category) ? parseOccasions(o.occasions).filter((k) => k !== "chanukah") : parseOccasions(o.occasions),
-      weddingOnly: weddingSpecific(title, o.site_description, category),
+      occasions: weddingSpecific(title, o.site_description, category, cardLabel) ? parseOccasions(o.occasions).filter((k) => k !== "chanukah") : parseOccasions(o.occasions),
+      weddingOnly: weddingSpecific(title, o.site_description, category, cardLabel),
       side: SIDE_CATEGORIES.includes(category.toLowerCase()),
       category,
       gender: normalizeGender(o.who_is_it_for),
@@ -359,7 +397,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "13";
+const ASSET_V = "14";
 
 function chanukahBand(ctx) {
   const s = ctx.season;
@@ -459,7 +497,7 @@ function card(p, { headingTag = "h3", eager = false } = {}) {
     </div>
   </a>
   <div class="product-card-body">
-    ${p.band ? `<span class="band">${esc(p.band)}</span>` : ""}
+    ${p.band || p.cardLabel ? `<span class="chips">${p.band ? `<span class="band">${esc(p.band)}</span>` : ""}${cardLabelBadge(p)}</span>` : ""}
     <a class="btn-pill btn-amazon ${linkClass(p)}" href="${esc(p.url)}" target="_blank" rel="${p.rel}" data-id="${esc(p.id)}">${esc(buyLabel(p))}</a>
   </div>
 </article>`;
@@ -627,7 +665,7 @@ function pageHome(ctx) {
   const forHer = mainGifts.filter((p) => p.gender === "her" && !isCardOrWrap(p)).sort(byPop).slice(0, 12);
   const forHim = mainGifts.filter((p) => p.gender === "him" && !isCardOrWrap(p)).sort(byPop).slice(0, 12);
   const under50 = mainGifts.filter((p) => (p.bandKey === "u25" || p.bandKey === "25-50") && !isCardOrWrap(p)).sort(byPop).slice(0, 12);
-  const annCat = ctx.categories.find((c) => c.name.toLowerCase() === "anniversary cards");
+  const annCat = ctx.categories.find((c) => c.name.toLowerCase() === "cards");
   const cards = annCat ? [...annCat.products].sort(byPop) : [];
   const n = mainGifts.length;
   const ld = [{ "@context": "https://schema.org", "@type": "WebSite", name: "7 Day Gifts", url: SITE + "/" },
@@ -662,7 +700,7 @@ ${daysBlock(ctx)}
 ${rowSection("For Her", "For the kallah, or your wife.", forHer, ["/for/her.html", "See all"])}
 ${rowSection("For Him", "For the chosson, or your husband.", forHim, ["/for/him.html", "See all"])}
 ${rowSection("Under $50", "Thoughtful doesn’t have to mean expensive.", under50, ["/budget/under-50.html", "See all"])}
-${annCat ? rowSection("Anniversary Cards", "Sweet, funny and always clean, to go with the gift.", cards, [`/category/${annCat.slug}.html`, "See all"]) : ""}
+${annCat ? rowSection("Cards", "Funny, sweet, anniversary and just-because cards. Always clean, to go with the gift.", cards, [`/category/${annCat.slug}.html`, "See all"]) : ""}
       <section class="section">
         ${sectionHeader("Gift guides", "Short, practical guides to help you plan.", "h2", { link: ["/guides/", "All guides"] })}
         <div class="guide-list">
@@ -784,6 +822,7 @@ function pageProduct(ctx, p) {
             <p class="product-detail-desc">${esc(p.description)}</p>
             <dl class="product-facts">
               <div><dt>Who it's for</dt><dd><a href="/for/${who.slug}.html">${esc(whoLine)}</a></dd></div>
+              ${p.cardLabel ? `<div><dt>Card type</dt><dd>${esc(p.cardLabel)}</dd></div>` : ""}
               ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check ${p.shop ? "the shop" : "Amazon"} for today's price)</span></dd></div>` : ""}
               ${cat ? `<div><dt>Category</dt><dd><a href="/category/${cat.slug}.html">${esc(cat.name)}</a></dd></div>` : ""}
               ${occ.length ? `<div><dt>Great for</dt><dd>${occ.map((o) => o.key === "chanukah" ? `<a href="/chanukah/">${o.short}</a>` : esc(o.short)).join(", ")}</dd></div>` : ""}
@@ -818,17 +857,24 @@ function pageList(ctx, { h1, title, description, canonical, intro, list, crumbIt
       </section>` + footer(ctx);
 }
 
+const CARD_SECTION_TEXT = { Sweet: "Kind words for no special reason.", "Just Because": "To say you were thinking of them.", Funny: "Clean and actually funny.", Anniversary: "For every anniversary.", Wedding: "For the wedding itself." };
+function cardSections(list) {
+  const order = ["Sweet", "Just Because", "Funny", "Anniversary", "Wedding"];
+  const labels = [...new Set(list.map((p) => p.cardLabel || "More cards"))].sort((x, y) => (order.indexOf(x) + 1 || 99) - (order.indexOf(y) + 1 || 99));
+  return labels.map((l) => ({ title: l === "More cards" ? l : `${l} cards`, text: CARD_SECTION_TEXT[l] || "", list: list.filter((p) => (p.cardLabel || "More cards") === l) }));
+}
 function pageCategory(ctx, c) {
   const list = [...c.products].sort(byPop);
   const intro = ctx.catIntros[c.name] || `Hand-picked ${c.name.toLowerCase()} gift ideas for the chosson, the kallah and your spouse.`;
   const others = ctx.categories.filter((o) => o.name !== c.name).map((o) => `<a class="chip" href="/category/${o.slug}.html">${esc(o.name)} <span class="chip-count">${o.products.length}</span></a>`).join("");
   const isCards = /card/i.test(c.name), isWrap = /wrap/i.test(c.name);
   const h1 = isCards || isWrap ? c.name : `${c.name} Gift Ideas`;
-  const ttl = isCards ? `${c.name}: Sweet & Funny (Clean) Cards for Your Spouse | 7 Day Gifts` : isWrap ? `Wrapping Paper for Chanukah, Anniversary & Wedding Gifts | 7 Day Gifts` : `${c.name} Gift Ideas for the Chosson, Kallah & Spouse | 7 Day Gifts`;
+  const ttl = isCards ? `${c.name}: Sweet & Funny (Clean) Cards for Your Spouse | 7 Day Gifts` : isWrap ? `Gift Wrap: Wrapping Paper, Ribbon & Seals for Chanukah, Anniversary & Wedding Gifts | 7 Day Gifts` : `${c.name} Gift Ideas for the Chosson, Kallah & Spouse | 7 Day Gifts`;
   return pageList(ctx, {
     h1, title: ttl, eyebrow: `${list.length} ${list.length === 1 ? "pick" : "picks"}`,
     description: clip(`${intro} ${list.length} hand-picked ${list.length === 1 ? "idea" : "ideas"}.`, 158),
     canonical: `${SITE}/category/${c.slug}.html`, intro, list, noindex: !c.indexable,
+    sections: isCards ? cardSections(list) : null,
     crumbItems: [["/index.html", "Home"], ["/gift-gallery.html", "All Gifts"], [`/category/${c.slug}.html`, c.name === "Home" ? "For the Home" : c.name]],
     extra: `<div class="more-block"><h2 class="more-title">More categories</h2><div class="chip-row">${others}</div></div>`,
   });
@@ -994,10 +1040,12 @@ async function main() {
   for (const b of budgetPages(ctx)) await add(b.rel, b.html, b.index);
   for (const c of chanukahPages(ctx)) await add(c.rel, c.html, season.on, c.url || c.rel);
   for (const c of categories) await add(`category/${c.slug}.html`, pageCategory(ctx, c), c.indexable);
+  const movedPages = await writeCategoryRedirects(categories);
+  if (movedPages) console.log(`Old category addresses forwarded to the new ones: ${movedPages}`);
   for (const p of products) await add(`gifts/${p.slug}.html`, pageProduct(ctx, p));
 
   // product data for the wish list, gallery and gift finder scripts
-  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, thumb: p.thumb, url: p.url, shop: p.shop, rel: p.rel, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, bandKey: p.bandKey, occasions: p.occasions, weddingOnly: p.weddingOnly, hook: p.hook, side: p.side }))));
+  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, thumb: p.thumb, url: p.url, shop: p.shop, rel: p.rel, slug: p.slug, category: p.category, cardLabel: p.cardLabel, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, bandKey: p.bandKey, occasions: p.occasions, weddingOnly: p.weddingOnly, hook: p.hook, side: p.side }))));
   await writeOut("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${SITE}/${u}</loc></url>`).join("\n")}\n</urlset>\n`);
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 

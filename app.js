@@ -274,8 +274,9 @@ function initFinder(products) {
   function occasionOk(p, occ) {
     if (!occ) return true;
     const cat = p.category || "";
-    if (isCard(p) && /anniversary/i.test(cat)) return occ === "anniversary";
-    if (isCard(p) && /wedding/i.test(cat)) return occ === "wedding";
+    const label = p.cardLabel || cat;
+    if (isCard(p) && /anniversary/i.test(label)) return occ === "anniversary";
+    if (isCard(p) && /wedding/i.test(label)) return occ === "wedding";
     if (occ !== "wedding" && p.weddingOnly) return false;
     return true;
   }
@@ -323,7 +324,7 @@ function initFinder(products) {
     status.textContent = list.length
       ? `${list.length} ${list.length === 1 ? "gift matches" : "gifts match"}.${note}${need > 0 ? ` Tap ${need} more to narrow it down.` : ""}`
       : "No matches yet. Try another budget or occasion.";
-    if (state.occasion === "anniversary") root.insertAdjacentHTML("beforeend", `<a class="finder-card-note" href="/category/anniversary-cards.html"><strong>Don’t forget the card</strong><span>Sweet, funny and always clean anniversary cards →</span></a>`);
+    if (state.occasion === "anniversary") root.insertAdjacentHTML("beforeend", `<a class="finder-card-note" href="/category/cards.html"><strong>Don’t forget the card</strong><span>Sweet, funny and always clean cards →</span></a>`);
     actions.classList.toggle("hidden", !picked);
     more.classList.toggle("hidden", list.length <= limit);
   }

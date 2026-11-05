@@ -474,3 +474,7 @@ html.menu-locked,html.menu-locked body{overflow:hidden}
 /* keep the gallery filters inside the phone screen (the pill rows swipe) */
 .filters{grid-template-columns:minmax(0,1fr)}
 .filters > *{min-width:0}
+
+/* card type label (Funny, Sweet, Anniversary, Wedding, Just Because) */
+.card-label{display:inline-block;padding:2px 9px;border-radius:999px;background:#EEF2F8;color:#1F3358;border:1px solid #D5DEEC;font-size:12px;font-weight:600;line-height:1.5;letter-spacing:.01em}
+.product-card-body .chips{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start}
