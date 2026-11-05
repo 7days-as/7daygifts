@@ -89,6 +89,8 @@ function productFromCard(id) {
     title: card.querySelector(".product-title, .product-detail-title")?.textContent.trim() || "",
     image: card.querySelector(".product-image")?.getAttribute("src") || "",
     url: card.querySelector(".amazon-link")?.getAttribute("href") || "#",
+    shop: (() => { const s = card.querySelector(".shop-link"); try { return s ? new URL(s.href).hostname.replace(/^www\./, "") : ""; } catch (e) { return ""; } })(),
+    rel: card.querySelector(".amazon-link")?.getAttribute("rel") || "",
     slug: (link.match(/\/gifts\/([^/]+)\.html/) || [])[1] || "",
     category: card.dataset.category || "",
     gender: card.dataset.gender || "all"
@@ -156,7 +158,7 @@ function renderCard(p, { saved = true } = {}) {
     </a>
     <div class="product-card-body">
       ${p.band ? `<span class="band">${escapeHtml(p.band)}</span>` : ""}
-      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="sponsored nofollow noopener" data-id="${escapeHtml(p.id)}">Check price on Amazon</a>
+      <a class="btn-pill btn-amazon amazon-link" href="${escapeHtml(p.url || "#")}" target="_blank" rel="${escapeHtml(p.rel || "sponsored nofollow noopener")}" data-id="${escapeHtml(p.id)}">${p.shop ? "Shop at " + escapeHtml(p.shop) : "Check price on Amazon"}</a>
     </div>
   </article>`;
 }
@@ -195,6 +197,7 @@ function initGallery() {
     }
   };
   pick(genderWrap, "gender", params.get("for"));
+  pick(sortRow, "sort", params.get("sort"));
   // ?budget= takes a band key (25-50) or the band text ($25–$50)
   let startBudget = params.get("budget");
   if (startBudget && budgetWrap) {
@@ -220,7 +223,7 @@ function initGallery() {
       const okGender = gender === "all" || card.dataset.gender === gender || card.dataset.gender === "all";
       const okBudget = budget === "all" || card.dataset.band === budget;
       // anniversary cards and wrapping paper show only when their category is picked
-      const okCat = category === "all" ? card.dataset.side !== "1" : card.dataset.category === category;
+      const okCat = category === "all" ? card.dataset.side !== "1" : (card.dataset.category === category || (category === "Small Shops" && card.dataset.shop === "1"));
       card.hidden = !(okGender && okBudget && okCat);
       if (!card.hidden) shown++;
       grid.appendChild(card);
@@ -265,12 +268,16 @@ function initFinder(products) {
 
   const isCard = (p) => /card/i.test(p.category || "");
   const isWrap = (p) => /wrap/i.test(p.category || "");
+  // Every occasion is broad: all gifts that match who + budget. Anniversary cards only show for
+  // anniversaries; wedding cards only for the week before the wedding; wedding-only gifts
+  // (Mr & Mrs, bride/groom…) only for the wedding. (Wrapping paper is never in the finder.)
   function occasionOk(p, occ) {
     if (!occ) return true;
-    if (isCard(p) && /anniversary/i.test(p.category || "")) return occ === "anniversary"; // anniversary cards: only for anniversaries
-    const list = p.occasions || [];
-    if (!list.length) return true; // untagged gifts work for any occasion
-    return list.includes(occ);
+    const cat = p.category || "";
+    if (isCard(p) && /anniversary/i.test(cat)) return occ === "anniversary";
+    if (isCard(p) && /wedding/i.test(cat)) return occ === "wedding";
+    if (occ !== "wedding" && p.weddingOnly) return false;
+    return true;
   }
   function whoOk(p, who) {
     if (!who) return true;
@@ -354,6 +361,50 @@ function initScrollers() {
   });
 }
 
+// ========= HOMEPAGE GIFT REELS (gentle auto-scroll, swipeable; still for reduced motion) =========
+function initReels() {
+  const reels = document.querySelectorAll("[data-reel]");
+  if (!reels.length) return;
+  const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  reels.forEach((reel) => {
+    const track = reel.querySelector(".reel-track");
+    if (!track || still) return;
+    // copies of the cards make the loop seamless (enough to fill wide screens too)
+    const originals = [...track.children];
+    const cycleOf = () => originals.length ? (originals[originals.length - 1].offsetLeft + originals[originals.length - 1].offsetWidth + parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || 0) - originals[0].offsetLeft) : 0;
+    const fill = () => { let guard = 0; while (track.scrollWidth < cycleOf() + reel.clientWidth * 2 && guard++ < 6) originals.forEach((c) => { const k = c.cloneNode(true); k.setAttribute("aria-hidden", "true"); k.tabIndex = -1; track.appendChild(k); }); };
+    fill();
+    const dir = Number(reel.dataset.dir || 1);
+    const speed = Number(reel.dataset.speed || 0.3);
+    let half = cycleOf();
+    let pos = dir < 0 ? half : 0;
+    let paused = false, visible = true, resumeAt = 0, last = 0;
+    reel.scrollLeft = pos;
+    const hold = (ms) => { resumeAt = performance.now() + ms; };
+    reel.addEventListener("pointerdown", () => hold(4000), { passive: true });
+    reel.addEventListener("touchstart", () => hold(4000), { passive: true });
+    reel.addEventListener("wheel", () => hold(3000), { passive: true });
+    reel.addEventListener("mouseenter", () => { paused = true; });
+    reel.addEventListener("mouseleave", () => { paused = false; });
+    reel.addEventListener("focusin", () => { paused = true; });
+    reel.addEventListener("focusout", () => { paused = false; });
+    window.addEventListener("resize", () => { fill(); half = cycleOf(); });
+    if ("IntersectionObserver" in window) new IntersectionObserver((e) => { visible = e[0].isIntersecting; }).observe(reel);
+    const tick = (t) => {
+      const dt = last ? Math.min(50, t - last) : 16; last = t;
+      if (!paused && visible && !document.hidden && t > resumeAt && half > 0) {
+        if (Math.abs(reel.scrollLeft - pos) > 2) pos = reel.scrollLeft; // the visitor swiped
+        pos += dir * speed * (dt / 16.7);
+        if (pos >= half) pos -= half;
+        if (pos <= 0) pos += half;
+        reel.scrollLeft = pos;
+      } else if (t <= resumeAt) pos = reel.scrollLeft;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
 // ========= CHANUKAH COUNTDOWN =========
 function initCountdown() {
   const c = window.__chanukah;
@@ -402,6 +453,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initClicks();
   initGallery();
   initScrollers();
+  initReels();
   initCountdown();
   syncHearts();
   renderWishlistPage([]);

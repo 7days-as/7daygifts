@@ -167,6 +167,71 @@ function chanukahSeason(today = (args.includes("--date") ? args[args.indexOf("--
 }
 const SEASON_SCRIPT = `(function(){var D=${JSON.stringify(CHANUKAH_STARTS)},B=${SEASON_DAYS_BEFORE},A=${SEASON_DAYS_AFTER};function add(s,n){var d=new Date(s+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}var t;try{t=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}catch(e){t=new Date().toISOString().slice(0,10)}var q=location.search.match(/[?&]chanukah=(on|off)/);var s=null,on=false;for(var i=0;i<D.length;i++){if(t<=add(D[i],A)){s=D[i];break}}if(s)on=t>=add(s,-B);if(q)on=q[1]=="on";var h=document.documentElement;h.classList.toggle("is-chanukah",on);window.__chanukah={on:on,start:s,today:t};var m=document.querySelector('meta[name="robots"][data-seasonal]');if(m)m.setAttribute("content",on?"index, follow":"noindex, follow")})();`;
 
+// ---------- shops: products that are not on Amazon ----------
+// A Sheet row with amazon_enabled = FALSE and a my_url that is not an Amazon link links straight to
+// that shop: the button says "Shop at <domain>", and the product also appears under "Small Shops".
+const SMALL_SHOPS = "Small Shops";
+const AMAZON_HOST_RX = /(^|\.)(amazon\.[a-z.]+|amzn\.to|amzn\.com|amzn\.eu|a\.co)$/i;
+const AFFILIATE_PARAM_RX = /[?&#](ref|tag|aff|affid|aff_id|aff_sub|affiliate|affiliate_id|aid|irclickid|irgwc|clickid|ranmid|raneaid|ransiteid|sscid|cjevent|awc|sharedid|rfsn|partner|partner_id|via|utm_medium=affiliate)(=|&|$)/i;
+const hostOf = (u) => { try { return new URL(u).hostname.toLowerCase().replace(/^www\./, ""); } catch { return ""; } };
+const isOff = (v) => /^(false|no|n|0|off)$/i.test(String(v ?? "").trim());
+function linkFor(o, asin) {
+  const raw = String(o.my_url || "").trim();
+  const mine = /^https?:\/\//i.test(raw) ? raw : (/^[\w-]+(\.[\w-]+)+(\/|$)/.test(raw) ? "https://" + raw : "");
+  const host = hostOf(mine);
+  if (host && !AMAZON_HOST_RX.test(host) && (isOff(o.amazon_enabled) || !asin)) {
+    const affiliate = AFFILIATE_PARAM_RX.test(mine);
+    return { url: mine, shop: host, affiliate, rel: affiliate ? "sponsored nofollow noopener" : "nofollow noopener" };
+  }
+  if (asin) return { url: `https://www.amazon.com/dp/${asin}?tag=${AFFILIATE_TAG}`, shop: "", affiliate: true, rel: "sponsored nofollow noopener" };
+  if (mine) return { url: mine, shop: "", affiliate: true, rel: "sponsored nofollow noopener" }; // amzn.to short links
+  return null;
+}
+const buyLabel = (p) => (p.shop ? `Shop at ${p.shop}` : "Check price on Amazon");
+const linkClass = (p) => (p.shop ? "amazon-link shop-link" : "amazon-link");
+
+// ---------- gift guides: hand-picked + tagged in the Sheet ----------
+// Each guide section in data/guides.json has a short "key" (day2-cozy, kallah-cozy, chanukah-wife…).
+// Typing that key in a product's "guides" column in the Sheet adds the product to that section,
+// after the hand-picked ones, most popular first, up to GUIDE_CAP gifts per section.
+// Shortcuts: "day2" = day2-cozy; "chanukah" = chanukah-wife / -husband / -both by who it's for.
+const GUIDE_CAP = 8;
+const parseGuideTags = (v) => String(v || "").toLowerCase().split(/[,;\n]/)
+  .map((s) => s.trim().replace(/[\s_]+/g, "-").replace(/^day-(\d)/, "day$1")).filter(Boolean);
+const WEDDING_WORDS_RX = /\bmr\.?\s*(?:&|and)\s*mrs\b|\bbride\b|\bgroom\b|\bnewly ?weds?\b/i;
+function fillGuides(guides, products) {
+  const sections = guides.flatMap((g) => g.sections.filter((s) => s.key));
+  const byKey = new Map(sections.map((s) => [s.key, s]));
+  const unknown = new Set();
+  const resolve = (tag, p) => {
+    if (byKey.has(tag)) return byKey.get(tag);
+    if (tag === "chanukah") return byKey.get(p.gender === "her" ? "chanukah-wife" : p.gender === "him" ? "chanukah-husband" : "chanukah-both");
+    const hits = sections.filter((s) => s.key.split("-")[0] === tag);
+    if (hits.length === 1) return hits[0];
+    unknown.add(tag); return null;
+  };
+  const tagged = new Map();
+  for (const p of [...products].sort(byPop)) for (const tag of p.guides || []) {
+    const s = resolve(tag, p);
+    if (!s) continue;
+    if (!tagged.has(s)) tagged.set(s, []);
+    if (!tagged.get(s).includes(p)) tagged.get(s).push(p);
+  }
+  const live = new Set(products.map((p) => p.id));
+  let added = 0;
+  for (const s of sections) {
+    const room = Math.max(0, (s.cap || GUIDE_CAP) - s.products.filter((id) => live.has(id)).length);
+    const cardsOk = /card|wrap/i.test(s.heading);
+    const seasonal = /^chanukah/.test(s.key);
+    const extra = (tagged.get(s) || []).filter((p) => !s.products.includes(p.id)
+      && (cardsOk || !/card|wrap/i.test(p.category))
+      && !(seasonal && (p.weddingOnly ?? WEDDING_WORDS_RX.test(p.title)))).slice(0, room);
+    s.products = [...s.products, ...extra.map((p) => p.id)];
+    added += extra.length;
+  }
+  return { added, unknown: [...unknown] };
+}
+
 const WHO = {
   him: { slug: "him", label: "For Him", h1: "Gifts for Him: the Chosson or Your Husband", title: "Gifts for Him: Chosson & Husband Gift Ideas", blurb: "Gift ideas for a chosson in the week before the wedding, or for your husband on an anniversary or Yom Tov.", phrase: "him" },
   her: { slug: "her", label: "For Her", h1: "Gifts for Her: the Kallah or Your Wife", title: "Gifts for Her: Kallah & Wife Gift Ideas", blurb: "Gift ideas for a kallah in the week before the wedding, or for your wife on an anniversary or Yom Tov.", phrase: "her" },
@@ -204,8 +269,9 @@ async function loadProducts() {
     const id = String(o.product_id || "").trim() || asin || `product-${index + 1}`;
     const title = String(o.site_title || "").trim();
     if (!title) return;
-    const url = asin ? `https://www.amazon.com/dp/${asin}?tag=${AFFILIATE_TAG}` : String(o.my_url || "").trim();
-    if (!url) return;
+    const link = linkFor(o, asin);
+    if (!link) return;
+    const { url, shop, rel } = link;
     const name = String(names[id] || "").trim() || shortName(title);
     let slug = slugLock[id];
     if (!slug) {
@@ -218,7 +284,8 @@ async function loadProducts() {
     const image = cleanImage(o.photo_url);
     const band = normalizeBand(o.price);
     products.push({
-      id, asin, title, name, slug, url,
+      id, asin, title, name, slug, url, shop, rel,
+      guides: parseGuideTags(o.guides),
       image, thumb: sizedImage(image, 400), big: sizedImage(image, 800),
       band: band ? band.label : "", bandKey: band ? band.key : "",
       occasions: weddingSpecific(title, o.site_description, category) ? parseOccasions(o.occasions).filter((k) => k !== "chanukah") : parseOccasions(o.occasions),
@@ -292,7 +359,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "12";
+const ASSET_V = "13";
 
 function chanukahBand(ctx) {
   const s = ctx.season;
@@ -361,7 +428,7 @@ function footer(ctx) {
       </div>
       <div class="footer-bottom">
         <span>© ${year} 7DayGifts.com</span>
-        <span>As an Amazon Associate we earn from qualifying purchases. Prices and availability are set by Amazon and can change.</span>
+        <span>As an Amazon Associate we earn from qualifying purchases. Prices and availability are set by Amazon (or by the shop, for Small Shops gifts) and can change.</span>
       </div>
     </footer>
   </div>
@@ -382,7 +449,7 @@ function card(p, { headingTag = "h3", eager = false } = {}) {
   const img = p.image
     ? `<img class="product-image" src="${esc(p.thumb || p.image)}" alt="${esc(p.name)}" ${eager ? "" : 'loading="lazy" '}decoding="async" width="400" height="400" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
-  return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}" data-band="${p.bandKey}" data-side="${p.side ? 1 : 0}">
+  return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}" data-band="${p.bandKey}" data-side="${p.side ? 1 : 0}" data-shop="${p.shop ? 1 : 0}">
   <button type="button" class="heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list">${ICON.heart}</button>
   <a class="product-link" href="/gifts/${p.slug}.html">
     <div class="product-image-wrap${p.image ? "" : " image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
@@ -393,7 +460,7 @@ function card(p, { headingTag = "h3", eager = false } = {}) {
   </a>
   <div class="product-card-body">
     ${p.band ? `<span class="band">${esc(p.band)}</span>` : ""}
-    <a class="btn-pill btn-amazon amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">Check price on Amazon</a>
+    <a class="btn-pill btn-amazon ${linkClass(p)}" href="${esc(p.url)}" target="_blank" rel="${p.rel}" data-id="${esc(p.id)}">${esc(buyLabel(p))}</a>
   </div>
 </article>`;
 }
@@ -511,6 +578,48 @@ function categoryTiles(ctx) {
         </div>`;
 }
 
+// ---------- homepage first screen: real gifts, moving gently ----------
+function reelCard(p, { isNew = false, eager = false } = {}) {
+  return `<a class="reel-card" href="/gifts/${p.slug}.html">
+            <span class="reel-img"><img src="${esc(sizedImage(p.image, 400))}" alt="" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async" width="300" height="300" onerror="this.closest('.reel-card').remove()" />${isNew ? '<span class="reel-new">New</span>' : ""}${p.band ? `<span class="reel-band">${esc(p.band)}</span>` : ""}</span>
+            <span class="reel-name">${esc(p.name)}</span>
+          </a>`;
+}
+function heroBlock(ctx, n) {
+  const pool = ctx.mainGifts.filter((p) => p.image && !isCardOrWrap(p) && !p.side);
+  const top = [...pool].sort(byPop).slice(0, 8);
+  const fresh = [...pool].filter((p) => !top.includes(p)).sort((a, b) => b.order - a.order).slice(0, 8);
+  const s = ctx.season;
+  return `      <section class="hero hero-gifts">
+        <span class="hero-glow hero-glow-1" aria-hidden="true"></span><span class="hero-glow hero-glow-2" aria-hidden="true"></span>
+        <div class="hero-inner">
+          <div class="hero-chips">
+            <a class="hchip hchip-new" href="/gift-gallery.html?sort=recent"><span class="hchip-dot" aria-hidden="true"></span>New this week</a>
+            ${s && s.start ? `<a class="hchip hchip-chanukah seasonal" href="/chanukah/">${ICON.menorah}<span>Chanukah · <span data-chanukah-countdown>begins ${esc(new Date(s.start + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }))}</span></span></a>` : ""}
+          </div>
+          <h1 class="hero-title">Seven days.<br /><em>Seven thoughtful gifts.</em></h1>
+          <p class="hero-subtitle">Hand-picked gifts for the chosson, the kallah, and every anniversary after.</p>
+        </div>
+        <div class="gift-reel" data-reel data-speed="0.32" aria-label="Most-loved gifts">
+          <div class="reel-track">
+          ${top.map((p, i) => reelCard(p, { eager: i < 4 })).join("\n          ")}
+          </div>
+        </div>
+        ${fresh.length >= 4 ? `<div class="gift-reel gift-reel-sm" data-reel data-speed="0.24" data-dir="-1" aria-label="New gifts">
+          <div class="reel-track">
+          ${fresh.map((p) => reelCard(p, { isNew: true })).join("\n          ")}
+          </div>
+        </div>` : ""}
+        <div class="hero-inner hero-cta">
+          <div class="hero-actions">
+            <a class="btn-pill btn-primary btn-big" href="/gift-gallery.html">Browse all ${n} gifts${ICON.arrow}</a>
+            <a class="btn-pill btn-light btn-big" href="#finder">Find a gift in 3 taps</a>
+          </div>
+        </div>
+      </section>
+`;
+}
+
 // ---------- pages ----------
 function pageHome(ctx) {
   const { products, mainGifts } = ctx;
@@ -529,21 +638,7 @@ function pageHome(ctx) {
         ${row(list)}
       </section>` : "";
   return head({ ctx, title: "7 Day Gifts · Gift Ideas for the 7 Days Before the Wedding & Every Anniversary", description: `${n} hand-picked gift ideas for the seven days before a Jewish wedding, for the chosson and the kallah, plus anniversary and Chanukah gifts for your spouse.`, canonical: SITE + "/", jsonld: ld }) + header("Home", ctx) + `
-      <section class="hero">
-        <picture class="hero-bg" aria-hidden="true">
-          <source media="(max-width: 700px)" srcset="/hero-800.jpg" />
-          <img src="/hero-1600.jpg" alt="" width="1600" height="1067" fetchpriority="high" />
-        </picture>
-        <div class="hero-inner">
-          <p class="eyebrow">For the chosson, the kallah &amp; every anniversary after</p>
-          <h1 class="hero-title">Seven days.<br /><em>Seven thoughtful gifts.</em></h1>
-          <p class="hero-subtitle">Thoughtful gifts for every day of the week before the wedding — and every anniversary after.</p>
-          <div class="hero-actions">
-            <a class="btn-pill btn-primary btn-big" href="/gift-gallery.html">Browse all gifts</a>
-            <a class="btn-pill btn-light btn-big" href="#finder">Find a gift in 3 taps</a>
-          </div>
-        </div>
-      </section>
+${heroBlock(ctx, n)}
       <ul class="trust-strip" aria-label="Why 7 Day Gifts">
         <li><span class="trust-ico" aria-hidden="true">✓</span>Hand-picked</li>
         <li><span class="trust-ico" aria-hidden="true">★</span>Top-rated on Amazon</li>
@@ -685,20 +780,20 @@ function pageProduct(ctx, p) {
           <div class="product-detail-body">
             ${cat ? `<a class="eyebrow eyebrow-link" href="/category/${cat.slug}.html">${esc(cat.name === "Home" ? "For the Home" : cat.name)}</a>` : ""}
             <h1 class="product-detail-title">${esc(p.name)}</h1>
-            ${p.band ? `<p class="price-line"><span class="band band-lg">${esc(p.band)}</span> · Check price on Amazon</p>` : ""}
+            ${p.band ? `<p class="price-line"><span class="band band-lg">${esc(p.band)}</span> · ${p.shop ? `Price set by ${esc(p.shop)}` : "Check price on Amazon"}</p>` : ""}
             <p class="product-detail-desc">${esc(p.description)}</p>
             <dl class="product-facts">
               <div><dt>Who it's for</dt><dd><a href="/for/${who.slug}.html">${esc(whoLine)}</a></dd></div>
-              ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check Amazon for today's price)</span></dd></div>` : ""}
+              ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check ${p.shop ? "the shop" : "Amazon"} for today's price)</span></dd></div>` : ""}
               ${cat ? `<div><dt>Category</dt><dd><a href="/category/${cat.slug}.html">${esc(cat.name)}</a></dd></div>` : ""}
               ${occ.length ? `<div><dt>Great for</dt><dd>${occ.map((o) => o.key === "chanukah" ? `<a href="/chanukah/">${o.short}</a>` : esc(o.short)).join(", ")}</dd></div>` : ""}
             </dl>
             <div class="product-actions">
-              <a class="btn-pill btn-primary btn-big amazon-link" href="${esc(p.url)}" target="_blank" rel="sponsored nofollow noopener" data-id="${esc(p.id)}">Check price on Amazon</a>
+              <a class="btn-pill btn-primary btn-big ${linkClass(p)}" href="${esc(p.url)}" target="_blank" rel="${p.rel}" data-id="${esc(p.id)}">${esc(buyLabel(p))}</a>
               <button type="button" class="heart heart-btn" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list">${ICON.heart}</button>
             </div>
-            ${p.title !== p.name ? `<p class="product-note">Amazon listing: ${esc(p.title)}</p>` : ""}
-            <p class="product-note">Price and delivery are shown on Amazon and can change. As an Amazon Associate we may earn from qualifying purchases.</p>
+            ${p.title !== p.name && !p.shop ? `<p class="product-note">Amazon listing: ${esc(p.title)}</p>` : ""}
+            ${p.shop ? `<p class="product-note">Sold by ${esc(p.shop)}. Price, shipping and returns are set by the shop.${p.rel.includes("sponsored") ? " We may earn a commission if you buy through this link." : ""}</p>` : `<p class="product-note">Price and delivery are shown on Amazon and can change. As an Amazon Associate we may earn from qualifying purchases.</p>`}
             ${guides.length ? `<p class="product-guides">Featured in: ${guides.map((g) => `<a href="/guides/${g.slug}.html">${esc(shortGuide(g.title))}</a>`).join(" · ")}</p>` : ""}
           </div>
         </article>
@@ -874,8 +969,11 @@ async function main() {
   const guides = await readJSON("data/guides.json", []);
   const catMap = new Map();
   for (const p of products) if (p.category) { if (!catMap.has(p.category)) catMap.set(p.category, []); catMap.get(p.category).push(p); }
+  // every product linking to its own shop also shows under "Small Shops" (the page is skipped while empty)
+  for (const p of products) if (p.shop && p.category !== SMALL_SHOPS) { if (!catMap.has(SMALL_SHOPS)) catMap.set(SMALL_SHOPS, []); catMap.get(SMALL_SHOPS).push(p); }
+  const guideFill = fillGuides(guides, products);
   const categories = [...catMap.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([name, list]) => ({ name, slug: slugify(name), products: list, indexable: list.length >= 2 }));
+    .map(([name, list]) => ({ name, slug: slugify(name), products: list, indexable: list.length >= 2 || (name === SMALL_SHOPS && list.length >= 1) }));
   const season = chanukahSeason();
   const mainGifts = products.filter((p) => !p.side); // anniversary cards & wrapping paper have their own sections
   const ctx = { products, mainGifts, categories, guides, catIntros, season };
@@ -899,7 +997,7 @@ async function main() {
   for (const p of products) await add(`gifts/${p.slug}.html`, pageProduct(ctx, p));
 
   // product data for the wish list, gallery and gift finder scripts
-  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, thumb: p.thumb, url: p.url, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, bandKey: p.bandKey, occasions: p.occasions, hook: p.hook, side: p.side }))));
+  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, thumb: p.thumb, url: p.url, shop: p.shop, rel: p.rel, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, bandKey: p.bandKey, occasions: p.occasions, weddingOnly: p.weddingOnly, hook: p.hook, side: p.side }))));
   await writeOut("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${SITE}/${u}</loc></url>`).join("\n")}\n</urlset>\n`);
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 
@@ -910,6 +1008,10 @@ async function main() {
     const sorted = Object.fromEntries(Object.entries(slugLock).sort(([a], [b]) => a.localeCompare(b)));
     await writeFile(path.join(ROOT, "data/slugs.json"), JSON.stringify(sorted, null, 2) + "\n");
   }
+  console.log(`Gift guides: ${guideFill.added} gifts added from the Sheet's "guides" column.`);
+  if (guideFill.unknown.length) console.log(`Unknown guide keys in the Sheet (ignored): ${guideFill.unknown.join(", ")}`);
+  const shops = products.filter((p) => p.shop);
+  if (shops.length) console.log(`Small Shops products: ${shops.map((p) => `${p.id} (${p.shop})`).join(", ")}`);
   const missing = products.filter((p) => !p.hasOwnDescription).map((p) => p.id);
   const noBand = products.filter((p) => !p.band).map((p) => p.id);
   console.log(`Built ${products.length} product pages (${mainGifts.length} in the main gift mix), ${categories.length} category pages, 3 who-it's-for pages, ${guides.length} guides, ${urls.length} URLs in sitemap -> ${OUT}`);

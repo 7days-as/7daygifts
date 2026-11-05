@@ -16,7 +16,8 @@
           "DG-0049",
           "DG-0013",
           "DG-0029"
-        ]
+        ],
+        "key": "day1-sentimental"
       },
       {
         "heading": "Day 2: Something cozy to wear",
@@ -26,7 +27,8 @@
           "DG-0073",
           "DG-0044",
           "DG-0038"
-        ]
+        ],
+        "key": "day2-cozy"
       },
       {
         "heading": "Day 3: Something for every day",
@@ -36,7 +38,8 @@
           "DG-0015",
           "DG-0014",
           "DG-0035"
-        ]
+        ],
+        "key": "day3-everyday"
       },
       {
         "heading": "Day 4: Something for your new home",
@@ -46,7 +49,8 @@
           "DG-0070",
           "DG-0028",
           "DG-0057"
-        ]
+        ],
+        "key": "day4-home"
       },
       {
         "heading": "Day 5: Something for the trip ahead",
@@ -57,7 +61,8 @@
           "DG-0008",
           "DG-0007",
           "DG-0067"
-        ]
+        ],
+        "key": "day5-travel"
       },
       {
         "heading": "Day 6: Something fun",
@@ -68,7 +73,8 @@
           "DG-0021",
           "DG-0026",
           "DG-0078"
-        ]
+        ],
+        "key": "day6-fun"
       },
       {
         "heading": "Day 7: The special one",
@@ -79,7 +85,8 @@
           "DG-0002",
           "DG-0034",
           "DG-0054"
-        ]
+        ],
+        "key": "day7-special"
       }
     ],
     "tips": [
@@ -108,7 +115,8 @@
           "DG-0056",
           "DG-0063",
           "DG-0045"
-        ]
+        ],
+        "key": "kallah-keepsakes"
       },
       {
         "heading": "Fragrance and getting ready",
@@ -118,7 +126,8 @@
           "DG-0004",
           "DG-0071",
           "DG-0057"
-        ]
+        ],
+        "key": "kallah-fragrance"
       },
       {
         "heading": "For sheva brachos and travel",
@@ -129,7 +138,8 @@
           "DG-0007",
           "DG-0035",
           "DG-0069"
-        ]
+        ],
+        "key": "kallah-travel"
       },
       {
         "heading": "Cozy and everyday",
@@ -139,7 +149,8 @@
           "DG-0075",
           "DG-0052",
           "DG-0034"
-        ]
+        ],
+        "key": "kallah-cozy"
       }
     ],
     "tips": [
@@ -166,7 +177,8 @@
           "DG-0051",
           "DG-0064",
           "DG-0062"
-        ]
+        ],
+        "key": "chosson-carry"
       },
       {
         "heading": "For shiur, work and the desk",
@@ -176,7 +188,8 @@
           "DG-0046",
           "DG-0061",
           "DG-0077"
-        ]
+        ],
+        "key": "chosson-desk"
       },
       {
         "heading": "For the trip ahead",
@@ -186,7 +199,8 @@
           "DG-0065",
           "DG-0067",
           "DG-0072"
-        ]
+        ],
+        "key": "chosson-travel"
       },
       {
         "heading": "A little fun",
@@ -197,7 +211,8 @@
           "DG-0076",
           "DG-0073",
           "DG-0030"
-        ]
+        ],
+        "key": "chosson-fun"
       }
     ],
     "tips": [
@@ -224,7 +239,8 @@
           "DG-0075",
           "DG-0069",
           "DG-0001"
-        ]
+        ],
+        "key": "chanukah-wife"
       },
       {
         "heading": "For your husband",
@@ -235,18 +251,19 @@
           "DG-0076",
           "DG-0053",
           "DG-0037"
-        ]
+        ],
+        "key": "chanukah-husband"
       },
       {
         "heading": "For both of you",
         "text": "Gifts to enjoy together on a Chanukah night at home.",
         "products": [
           "DG-0021",
-          "DG-0044",
           "DG-0042",
           "DG-0026",
           "DG-0028"
-        ]
+        ],
+        "key": "chanukah-both"
       }
     ],
     "tips": [
