@@ -1,0 +1,40 @@
+name: Rebuild site from Google Sheet
+
+# Runs once a day and whenever you press "Run workflow" on the Actions tab.
+# It reads the published product sheet, rebuilds the HTML pages and sitemap,
+# and commits only if something changed. Vercel then deploys that commit.
+# Note: GitHub only runs scheduled workflows that live on the default branch,
+# so this starts working once the seo-preview branch is merged.
+on:
+  schedule:
+    - cron: "17 9 * * *"   # every day around 4-5 AM New York time
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebuild-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build pages from the sheet
+        run: node build.mjs
+      - name: Commit changes (if any)
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Sheet unchanged; nothing to commit."
+            exit 0
+          fi
+          git config user.name "7days-as"
+          git config user.email "263742835+7days-as@users.noreply.github.com"
+          git add -A
+          git commit -m "Rebuild pages from Google Sheet"
+          git push
