@@ -958,3 +958,13 @@ html.menu-locked, html.menu-locked body{ overflow:hidden; }
 
 .menu-close{border:none !important;background:transparent !important;border-radius:0;font-size:22px;color:var(--text);width:36px;height:36px;}
 .menu-close:hover{background:transparent !important;opacity:.7;}
+
+/* ---------- Menu items look tappable ---------- */
+.mobile-menu a.mobile-link{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 12px;margin:0 0 8px;
+  background:#fff;border:1px solid var(--border-soft);border-radius:12px;box-shadow:0 1px 2px rgba(47,58,74,.06);
+  font-weight:800;font-size:15px;color:var(--text);text-decoration:none;transition:background .12s ease,transform .08s ease,border-color .12s ease;}
+.mobile-menu a.mobile-link .mobile-link-chev{font-size:22px;line-height:1;color:var(--muted);margin-left:8px;}
+.mobile-menu a.mobile-link:hover{background:#F5F6F8;}
+.mobile-menu a.mobile-link:active{background:#ECEFF3;transform:scale(.98);}
+.mobile-menu a.mobile-link.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+.mobile-menu a.mobile-link.active .mobile-link-chev{color:#fff;}

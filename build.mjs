@@ -191,7 +191,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=10" />
+  <link rel="stylesheet" href="/style.css?v=11" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
@@ -199,7 +199,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
 
 function header(active) {
   const links = nav.map(([href, label]) => `<a href="${href}" class="nav-link${label === active ? " active" : ""}">${label}</a>`).join("\n          ");
-  const mlinks = nav.map(([href, label]) => `<a href="${href}">${label}</a>`).join("\n      ");
+  const mlinks = nav.map(([href, label]) => `<a href="${href}" class="mobile-link${label === active ? " active" : ""}"${label === active ? ' aria-current="page"' : ""}><span>${label}</span><span class="mobile-link-chev" aria-hidden="true">›</span></a>`).join("\n      ");
   return `
 <body>
   <div class="page">
