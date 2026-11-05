@@ -198,7 +198,7 @@ function notify_(cid, id, title, name, text, url) {
     '<p><a href="' + approve + '" style="background:#1f3a2e;color:#fff;padding:10px 18px;border-radius:20px;text-decoration:none">Approve — show it on the site</a></p>' +
     '<p><a href="' + reject + '" style="color:#888">Keep it private</a> (or just ignore this email)</p>' +
     '<p style="color:#888;font-size:13px">All comments are also in your Sheet "7daygifts Reviews &amp; Votes", tab comments.</p></div>';
-  MailApp.sendEmail({ to: cfg_('notify_email') || NOTIFY_EMAIL, subject: 'New comment on ' + title, htmlBody: html, body: from + ' wrote about ' + title + ':\n\n' + text + '\n\nApprove: ' + approve + '\nKeep private: ' + reject, name: '7daygifts.com' });
+  MailApp.sendEmail({ to: cfg_('notify_email') || NOTIFY_EMAIL, cc: cfg_('notify_cc') || '', subject: 'New comment on ' + title, htmlBody: html, body: from + ' wrote about ' + title + ':\n\n' + text + '\n\nApprove: ' + approve + '\nKeep private: ' + reject, name: '7daygifts.com' });
 }
 
 /* ---------- helpers ---------- */
