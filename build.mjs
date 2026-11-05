@@ -105,6 +105,12 @@ function normalizeBand(value) {
   return /\d+\.\d\d/.test(typed) ? null : { key: "", label: typed };
 }
 
+// ---------- wedding-specific items never show as Chanukah gifts (Avrohom, Nov 4: "Chanukah is not a wedding") ----------
+const WEDDING_ONLY_RX = /\bmr\.?\s*(?:&|and)\s*mrs\b|\bmr\b.*\bmrs\b|\bbride\b|\bgroom\b|\bnewly ?weds?\b|\bkallah\b|\bchosson\b|\bwedding (?:card|day|gift)\b/i;
+function weddingSpecific(title, desc, category) {
+  if (/^(anniversary cards|wedding cards)$/i.test(String(category || "").trim())) return true;
+  return WEDDING_ONLY_RX.test(`${title || ""} ${desc || ""}`);
+}
 // ---------- occasions (comma list in the sheet's `occasions` column) ----------
 const OCCASIONS = [
   { key: "wedding", label: "7 days before the wedding", short: "Before the wedding" },
@@ -215,7 +221,8 @@ async function loadProducts() {
       id, asin, title, name, slug, url,
       image, thumb: sizedImage(image, 400), big: sizedImage(image, 800),
       band: band ? band.label : "", bandKey: band ? band.key : "",
-      occasions: parseOccasions(o.occasions),
+      occasions: weddingSpecific(title, o.site_description, category) ? parseOccasions(o.occasions).filter((k) => k !== "chanukah") : parseOccasions(o.occasions),
+      weddingOnly: weddingSpecific(title, o.site_description, category),
       side: SIDE_CATEGORIES.includes(category.toLowerCase()),
       category,
       gender: normalizeGender(o.who_is_it_for),
@@ -768,7 +775,7 @@ function budgetPages(ctx) {
 // Chanukah pages: always built (the URLs never 404), indexed only in season.
 function chanukahPages(ctx) {
   const s = ctx.season;
-  const gifts = ctx.mainGifts.filter((p) => !isCardOrWrap(p));
+  const gifts = ctx.mainGifts.filter((p) => !isCardOrWrap(p) && !p.weddingOnly);
   let tagged = gifts.filter((p) => p.occasions.includes("chanukah"));
   if (!tagged.length) tagged = gifts; // nothing tagged yet: fall back to the top gifts by budget
   const pick = (f) => tagged.filter(f).sort(byPop);
