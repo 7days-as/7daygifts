@@ -191,7 +191,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=9" />
+  <link rel="stylesheet" href="/style.css?v=10" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
