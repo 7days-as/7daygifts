@@ -447,7 +447,6 @@ function header(active, ctx) {
       <nav class="mobile-menu-links">
         ${mlinks}
       </nav>
-      <a class="btn-pill btn-primary btn-block" href="/gift-finder.html">Find a gift in 3 taps</a>
     </aside>
     <p class="disclosure">As an Amazon Associate we earn from qualifying purchases.</p>
     <main class="main-content" id="main">`;
