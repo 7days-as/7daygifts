@@ -3,7 +3,9 @@
    Everything loads after the page; if the script is down the site works exactly as before. */
 (function () {
   "use strict";
-  var ENDPOINT = ""; // the web app's /exec address (Sheet "7daygifts Reviews & Votes" → config → web_app_url)
+  var ENDPOINT = ""; // optional: the web app's /exec address. Left empty, it is read from the published address Sheet below.
+  var ADDRESS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8bmnj0KRfb4knCetg9sozD_eUqYmuklbTIniwnR6ru62ntI9PTSBf4vO-MsIm9BDbyJcmHPeazvrY/pub?output=csv";
+  var EP_RE = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
   var OCC = [["wedding7", "7 days before the wedding"], ["birthday", "Birthday"], ["anniversary", "Anniversary"], ["justbecause", "Just because"], ["any", "Any occasion"]];
   var OCC_SAY = { birthday: "a birthday gift", anniversary: "an anniversary gift", wedding7: "for the 7 days before the wedding", justbecause: "a just-because gift", any: "great for any occasion" };
   var OCC_SHORT = { birthday: "Birthday", anniversary: "Anniversary", wedding7: "Wedding week", justbecause: "Just because", any: "Any occasion" };
@@ -18,8 +20,22 @@
     return v;
   }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  var epPromise = null;
+  function endpoint() {
+    if (ENDPOINT) return Promise.resolve(ENDPOINT);
+    if (epPromise) return epPromise;
+    var c = get("rv_ep", null);
+    if (c && Date.now() - c.at < (c.u ? 21600000 : 600000)) return (epPromise = Promise.resolve(c.u));
+    epPromise = fetch(ADDRESS_CSV).then(function (r) { return r.text(); }).then(function (t) {
+      var m = t.match(/https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec/); var u = m && EP_RE.test(m[0]) ? m[0] : "";
+      put("rv_ep", { u: u, at: Date.now() }); return u;
+    }).catch(function () { return c ? c.u : ""; });
+    return epPromise;
+  }
   function api(params, body) {
-    if (!ENDPOINT) return Promise.reject(new Error("off"));
+    return endpoint().then(function (ep) { if (!ep) throw new Error("off"); return call(ep, params, body); });
+  }
+  function call(ENDPOINT, params, body) {
     var ctl = window.AbortController ? new AbortController() : null;
     var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 15000);
     var opts = body ? { method: "POST", body: JSON.stringify(body), signal: ctl && ctl.signal } : { signal: ctl && ctl.signal };
@@ -134,7 +150,7 @@
     [l1, nameIn, l2, txt, hp, actC].forEach(function (n) { form.appendChild(n); });
     form.appendChild(el("p", "rv-note", "Comments come privately to 7daygifts and are read before anything is shown on the site."));
     det.appendChild(form); secC.appendChild(det); box.appendChild(secC);
-    if (!ENDPOINT) box.appendChild(el("p", "rv-preview", "Preview: saving turns on once it's connected to the 7daygifts Google Sheet."));
+    endpoint().then(function (ep) { if (!ep) box.appendChild(el("p", "rv-preview", "Preview: saving turns on once it's connected to the 7daygifts Google Sheet.")); });
     form.addEventListener("submit", function (e) { e.preventDefault(); sendComment(); });
 
     var anchor = detail.querySelector(".product-actions");

@@ -214,6 +214,8 @@ function book_() {
   try { var a = SpreadsheetApp.getActiveSpreadsheet(); if (a) return a; } catch (x) {}
   return SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('SHEET_ID') || SHEET_ID_FALLBACK);
 }
+// A tiny published Sheet the website reads to find this script's address (it holds nothing else).
+var PUBLIC_ADDRESS_SHEET = '19aHybi5Ar49VJ1kj09PTPCbLAkFIbReVX-MAicYT3jQ';
 var SHEET_ID_FALLBACK = '1UhpVuN0ews3D1hOAbY-a5V1TgPMpmXLNUXgkXc5Bx8c';
 function sheet_(name) {
   var b = book_(), sh = b.getSheetByName(name);
@@ -254,7 +256,8 @@ function noteUrl_() {
   var cache = CacheService.getScriptCache();
   if (cache.get('url_noted')) return;
   var url = ScriptApp.getService().getUrl();
-  if (url && cfg_('web_app_url') !== url) {
+  if (!url) return;
+  if (cfg_('web_app_url') !== url) {
     withLock_(function () {
       var sh = sheet_('config'), v = sh.getDataRange().getValues();
       for (var i = 1; i < v.length; i++) if (v[i][0] === 'web_app_url') { sh.getRange(i + 1, 2).setValue(url); return; }
@@ -262,6 +265,10 @@ function noteUrl_() {
     });
     cache.remove('cfg');
   }
+  try {
+    var cell = SpreadsheetApp.openById(PUBLIC_ADDRESS_SHEET).getSheets()[0].getRange('A2');
+    if (cell.getValue() !== url) cell.setValue(url);
+  } catch (x) {}
   cache.put('url_noted', '1', 21600);
 }
 function allow_(key, max, seconds) {
