@@ -82,6 +82,42 @@ function shortName(title) {
   return t.length > 70 ? clip(t, 70) : t;
 }
 
+// ---------- categories (9 main ones; older names in the Sheet still map to them) ----------
+const CATEGORY_MAP = {
+  "anniversary cards": "Cards", "wedding cards": "Cards", "funny cards": "Cards", "nice cards": "Cards", "just because cards": "Cards", "card": "Cards",
+  "wrapping paper": "Gift Wrap", "wrap": "Gift Wrap", "gift wrap & tags": "Gift Wrap",
+  "writing": "Accessories",
+  "home": "Home & Kitchen", "kitchen": "Home & Kitchen", "food": "Home & Kitchen", "home and kitchen": "Home & Kitchen",
+  "guitar": "Hobbies & Games", "pickleball": "Hobbies & Games", "games": "Hobbies & Games", "funny": "Hobbies & Games",
+  "travel": "Travel & Outdoors", "outdoors": "Travel & Outdoors",
+  "cosmetics": "Beauty & Fragrance", "cologne & perfume": "Beauty & Fragrance", "fragrance": "Beauty & Fragrance", "beauty": "Beauty & Fragrance",
+};
+const LABEL_FROM_OLD = { "anniversary cards": "Anniversary", "wedding cards": "Wedding", "funny cards": "Funny", "nice cards": "Sweet", "just because cards": "Just Because" };
+const CARD_LABELS = ["Funny", "Sweet", "Anniversary", "Wedding", "Just Because"];
+const normalizeCategory = (raw) => { const k = String(raw || "").trim().replace(/\s+/g, " "); return CATEGORY_MAP[k.toLowerCase()] || k; };
+function normalizeCardLabel(raw, oldCategory) {
+  const s = String(raw || "").trim().replace(/\s+/g, " ");
+  return CARD_LABELS.find((l) => l.toLowerCase() === s.toLowerCase()) || s || LABEL_FROM_OLD[String(oldCategory || "").trim().toLowerCase()] || "";
+}
+// old category pages and where they live now (301s in vercel.json; the build also leaves a small redirect page)
+const OLD_CATEGORY_SLUGS = {
+  "anniversary-cards": "cards", "wedding-cards": "cards", "funny-cards": "cards", "nice-cards": "cards", "just-because-cards": "cards",
+  "wrapping-paper": "gift-wrap", "writing": "accessories", "home": "home-and-kitchen", "kitchen": "home-and-kitchen", "food": "home-and-kitchen",
+  "guitar": "hobbies-and-games", "pickleball": "hobbies-and-games", "games": "hobbies-and-games", "funny": "hobbies-and-games",
+  "travel": "travel-and-outdoors", "outdoors": "travel-and-outdoors", "cosmetics": "beauty-and-fragrance", "cologne-and-perfume": "beauty-and-fragrance",
+};
+const redirectPage = (to) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>This page moved · 7 Day Gifts</title><meta name="robots" content="noindex, follow"><link rel="canonical" href="${SITE}${to}"><meta http-equiv="refresh" content="0; url=${to}"><script>location.replace(${JSON.stringify(to)})</script></head><body><p>This page moved: <a href="${to}">${to}</a></p></body></html>\n`;
+async function writeCategoryRedirects(categories) {
+  const live = new Set(categories.map((c) => c.slug));
+  let n = 0;
+  for (const [from, to] of Object.entries(OLD_CATEGORY_SLUGS)) {
+    if (live.has(from) || !live.has(to)) continue;
+    await writeOut(`category/${from}.html`, redirectPage(`/category/${to}.html`)); n++;
+  }
+  return n;
+}
+const cardLabelBadge = (p) => (p.cardLabel ? `<span class="card-label">${esc(p.cardLabel)}</span>` : "");
+
 // ---------- shops: products that are not on Amazon ----------
 // A Sheet row with amazon_enabled = FALSE and a my_url that is not an Amazon link links straight to
 // that shop: the button says "Shop at <domain>", and the product also appears under "Small Shops".
@@ -195,9 +231,11 @@ async function loadProducts() {
       while (used.has(slug)) slug = `${base}-${n++}`;
       used.add(slug); slugLock[id] = slug;
     }
-    const category = String(o.categories ?? o["categories "] ?? "").trim();
+    const rawCategory = String(o.categories ?? o["categories "] ?? "").trim();
+    const category = normalizeCategory(rawCategory);
+    const cardLabel = /card/i.test(category) ? normalizeCardLabel(o.card_label, rawCategory) : "";
     products.push({
-      id, asin, title, name, slug, url, shop, rel,
+      id, asin, title, name, slug, url, shop, rel, cardLabel,
       guides: parseGuideTags(o.guides),
       image: cleanImage(o.photo_url),
       category,
@@ -258,7 +296,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="stylesheet" href="/style.css?v=12" />
+  <link rel="stylesheet" href="/style.css?v=13" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="apple-touch-icon" href="/logo.png" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
@@ -317,7 +355,7 @@ function footer(ctx) {
       </div>
     </footer>
   </div>
-  <script src="/app.js?v=9"></script>
+  <script src="/app.js?v=10"></script>
 </body>
 </html>
 `;
@@ -341,6 +379,7 @@ function card(p, { headingTag = "h3" } = {}) {
     <${headingTag} class="product-title">${esc(p.name)}</${headingTag}>
   </a>
   <div class="product-card-body">
+    ${cardLabelBadge(p)}
     <a class="btn-pill btn-amazon ${linkClass(p)}" href="${esc(p.url)}" target="_blank" rel="${p.rel}" data-id="${esc(p.id)}">${priceLabel(p)}</a>
   </div>
 </article>`;
@@ -520,6 +559,7 @@ function pageProduct(ctx, p) {
             <p class="product-detail-desc">${esc(p.description)}</p>
             <dl class="product-facts">
               <div><dt>Who it's for</dt><dd><a href="/for/${who.slug}.html">${esc(whoLine)}</a></dd></div>
+              ${p.cardLabel ? `<div><dt>Card type</dt><dd>${esc(p.cardLabel)}</dd></div>` : ""}
               ${p.band ? `<div><dt>Budget</dt><dd>${esc(p.band)} <span class="band-note">(approx.; check ${p.shop ? "the shop" : "Amazon"} for today's price)</span></dd></div>` : ""}
               ${cat ? `<div><dt>Category</dt><dd><a href="/category/${cat.slug}.html">${esc(cat.name)}</a></dd></div>` : ""}
             </dl>
@@ -653,10 +693,12 @@ async function main() {
   for (const g of guides) await add(`guides/${g.slug}.html`, pageGuide(ctx, g));
   for (const k of ["her", "him", "all"]) await add(`for/${WHO[k].slug}.html`, pageWho(ctx, k));
   for (const c of categories) await add(`category/${c.slug}.html`, pageCategory(ctx, c), c.indexable);
+  const movedPages = await writeCategoryRedirects(categories);
+  if (movedPages) console.log(`Old category addresses forwarded to the new ones: ${movedPages}`);
   for (const p of products) await add(`gifts/${p.slug}.html`, pageProduct(ctx, p));
 
   // product data for the wish list and gallery scripts (same shape the old app.js used)
-  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, url: p.url, shop: p.shop, rel: p.rel, slug: p.slug, category: p.category, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, occasions: p.occasions }))));
+  await writeOut("products.json", JSON.stringify(products.map((p) => ({ id: p.id, asin: p.asin, title: p.name, image: p.image, url: p.url, shop: p.shop, rel: p.rel, slug: p.slug, category: p.category, cardLabel: p.cardLabel, gender: p.gender, popularity: p.popularity, order: p.order, band: p.band, occasions: p.occasions }))));
   await writeOut("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${SITE}/${u}</loc></url>`).join("\n")}\n</urlset>\n`);
   await writeOut("robots.txt", PREVIEW ? "User-agent: *\nAllow: /\n" : `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 

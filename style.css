@@ -973,3 +973,7 @@ html.menu-locked, html.menu-locked body{ overflow:hidden; }
 .product-detail-body,.product-facts>div{min-width:0;max-width:100%;}
 .product-facts dd{overflow-wrap:anywhere;}
 .product-actions .btn-big{white-space:normal;text-align:center;max-width:100%;flex:1 1 220px;}
+
+/* card type label (Funny, Sweet, Anniversary, Wedding, Just Because) */
+.card-label{display:inline-block;padding:2px 9px;border-radius:999px;background:#EEF2F8;color:#1F3358;border:1px solid #D5DEEC;font-size:12px;font-weight:600;line-height:1.5;letter-spacing:.01em}
+.product-card-body .card-label{align-self:flex-start;margin-bottom:6px}

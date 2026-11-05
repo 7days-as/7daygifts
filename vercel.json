@@ -1,0 +1,184 @@
+{
+  "redirects": [
+    {
+      "source": "/category/anniversary-cards.html",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/anniversary-cards",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/wedding-cards.html",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/wedding-cards",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/funny-cards.html",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/funny-cards",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/nice-cards.html",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/nice-cards",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/just-because-cards.html",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/just-because-cards",
+      "destination": "/category/cards.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/wrapping-paper.html",
+      "destination": "/category/gift-wrap.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/wrapping-paper",
+      "destination": "/category/gift-wrap.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/writing.html",
+      "destination": "/category/accessories.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/writing",
+      "destination": "/category/accessories.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/home.html",
+      "destination": "/category/home-and-kitchen.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/home",
+      "destination": "/category/home-and-kitchen.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/kitchen.html",
+      "destination": "/category/home-and-kitchen.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/kitchen",
+      "destination": "/category/home-and-kitchen.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/food.html",
+      "destination": "/category/home-and-kitchen.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/food",
+      "destination": "/category/home-and-kitchen.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/guitar.html",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/guitar",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/pickleball.html",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/pickleball",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/games.html",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/games",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/funny.html",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/funny",
+      "destination": "/category/hobbies-and-games.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/travel.html",
+      "destination": "/category/travel-and-outdoors.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/travel",
+      "destination": "/category/travel-and-outdoors.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/outdoors.html",
+      "destination": "/category/travel-and-outdoors.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/outdoors",
+      "destination": "/category/travel-and-outdoors.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/cosmetics.html",
+      "destination": "/category/beauty-and-fragrance.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/cosmetics",
+      "destination": "/category/beauty-and-fragrance.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/cologne-and-perfume.html",
+      "destination": "/category/beauty-and-fragrance.html",
+      "permanent": true
+    },
+    {
+      "source": "/category/cologne-and-perfume",
+      "destination": "/category/beauty-and-fragrance.html",
+      "permanent": true
+    }
+  ]
+}

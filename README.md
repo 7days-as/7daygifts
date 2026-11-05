@@ -28,3 +28,6 @@ Keys: day1-sentimental, day2-cozy, day3-everyday, day4-home, day5-travel, day6-f
 
 ## Small Shops (products not on Amazon)
 A row with `amazon_enabled` = FALSE, `amazon_asin` empty and `my_url` = the product's link on any shop gets a "Shop at <domain>" button (rel="nofollow"; "sponsored nofollow" when the link carries an affiliate parameter), no Amazon wording, and also shows on `/category/small-shops.html` (made only when at least one such product exists). Clicks are tracked like Amazon clicks.
+
+## Categories and card labels
+The site uses 9 categories: Cards, Gift Wrap, Accessories, Clothing, Home & Kitchen, Gadgets, Hobbies & Games, Travel & Outdoors, Beauty & Fragrance (plus Small Shops, automatic). Older names typed in the Sheet (Kitchen, Guitar, Wrapping Paper, Anniversary Cards…) are mapped to these by `CATEGORY_MAP` in build.mjs. Cards get a small badge from the `card_label` column: Funny, Sweet, Anniversary, Wedding or Just Because. Old category addresses 301 to the new pages (`vercel.json`), and the build also leaves a small redirect page at each old address.
