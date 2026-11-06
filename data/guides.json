@@ -310,11 +310,16 @@
         "products": [
           "DG-0001",
           "DG-0004",
+          "DG-0159",
+          "DG-0160",
+          "DG-0161",
+          "DG-0162",
           "DG-0007",
           "DG-0005",
           "DG-0035"
         ],
-        "key": "her-pretty"
+        "key": "her-pretty",
+        "cap": 10
       },
       {
         "heading": "Cozy at home",
@@ -376,9 +381,14 @@
           "DG-0119",
           "DG-0118",
           "DG-0117",
+          "DG-0155",
+          "DG-0156",
+          "DG-0157",
+          "DG-0158",
           "DG-0055"
         ],
-        "key": "him-cologne"
+        "key": "him-cologne",
+        "cap": 10
       },
       {
         "heading": "Everyday carry",
@@ -428,7 +438,7 @@
     ],
     "tips": [
       "Collar stays are an easy win: 2.25 inch stays fit most dress shirts, including Charles Tyrwhitt.",
-      "Not sure which cologne? Fresh, citrusy scents like Light Blue are a safe first pick.",
+      "Not sure which cologne? Fresh, citrusy scents like Light Blue Pour Homme or Luna Rossa Ocean are a safe first pick.",
       "Pair a small everyday item with a short note so he thinks of you each time he uses it."
     ]
   },
