@@ -826,12 +826,14 @@ function pageWishlist(ctx) {
       </section>` + footer(ctx);
 }
 
+// "You might also like" never crosses him/her: a men's cologne page doesn't suggest a women's perfume, and the other way round.
+const fitsWho = (p, q) => p.gender === "all" || q.gender === "all" || !p.gender || !q.gender || q.gender === p.gender;
 function pageProduct(ctx, p) {
   const who = WHO[p.gender];
   const cat = ctx.categories.find((c) => c.name === p.category);
   const related = [
     ...(isWallet(p) ? ctx.products.filter((q) => q.id !== p.id && isWalletTracker(q)) : []),
-    ...ctx.products.filter((q) => q.id !== p.id && q.category === p.category && !(isWallet(p) && isWalletTracker(q))).sort(byPop),
+    ...ctx.products.filter((q) => q.id !== p.id && q.category === p.category && !(isWallet(p) && isWalletTracker(q)) && fitsWho(p, q)).sort(byPop),
     ...ctx.products.filter((q) => q.id !== p.id && q.category !== p.category && !q.side && (q.gender === p.gender || p.gender === "all")).sort(byPop),
   ].slice(0, 8);
   const guides = ctx.guides.filter((g) => g.sections.some((s) => s.products.includes(p.id)));
