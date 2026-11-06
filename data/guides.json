@@ -290,6 +290,70 @@
     ]
   },
   {
+    "slug": "gift-ideas-for-her",
+    "title": "Gifts for Her: Ideas She Will Love and Actually Use",
+    "metaTitle": "Gifts for Her: Thoughtful Ideas She Will Love and Use",
+    "description": "Gift ideas for her: fragrance, jewelry storage, cozy slippers and throws, gadgets she will use every day and fun for her free time.",
+    "intro": [
+      "The best gifts for her are the ones she would love but wouldn't buy for herself: a fragrance she has been eyeing, something soft for slow mornings at home, or a gadget that makes her day a little easier.",
+      "Here are ideas grouped by the kind of gift, at a range of budgets. Looking for something with her name or your photo on it? See our personalized gifts guide."
+    ],
+    "sections": [
+      {
+        "heading": "Fragrance and pretty things",
+        "text": "A special scent and lovely places to keep her jewelry.",
+        "products": [
+          "DG-0001",
+          "DG-0004",
+          "DG-0007",
+          "DG-0005",
+          "DG-0035"
+        ],
+        "key": "her-pretty"
+      },
+      {
+        "heading": "Cozy at home",
+        "text": "Soft slippers and throws for Shabbos mornings and quiet evenings.",
+        "products": [
+          "DG-0074",
+          "DG-0102",
+          "DG-0148",
+          "DG-0075",
+          "DG-0084"
+        ],
+        "key": "her-cozy"
+      },
+      {
+        "heading": "Gadgets she will use every day",
+        "text": "Useful tech that makes reading, listening and her morning coffee better.",
+        "products": [
+          "DG-0083",
+          "DG-0052",
+          "DG-0032",
+          "DG-0100"
+        ],
+        "key": "her-gadgets"
+      },
+      {
+        "heading": "For her free time",
+        "text": "Something fun to do with friends, on the court or on a getaway.",
+        "products": [
+          "DG-0127",
+          "DG-0088",
+          "DG-0133",
+          "DG-0011",
+          "DG-0135"
+        ],
+        "key": "her-fun"
+      }
+    ],
+    "tips": [
+      "Not sure about fragrance? Ask her sister or a close friend what she wears, or pick a gadget or cozy gift instead.",
+      "Check her size before ordering slippers. Most of these run true to size, but returns are a hassle.",
+      "One bigger gift with a short handwritten note usually means more than several small ones."
+    ]
+  },
+  {
     "slug": "chanukah-gifts-for-wife-or-husband",
     "hidden": true,
     "title": "Chanukah Gifts for Your Wife or Husband",
