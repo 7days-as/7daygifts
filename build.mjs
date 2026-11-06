@@ -210,12 +210,23 @@ const SMALL_SHOPS = "Small Shops";
 const AMAZON_HOST_RX = /(^|\.)(amazon\.[a-z.]+|amzn\.to|amzn\.com|amzn\.eu|a\.co)$/i;
 const AFFILIATE_PARAM_RX = /[?&#](ref|tag|aff|affid|aff_id|aff_sub|affiliate|affiliate_id|aid|irclickid|irgwc|clickid|ranmid|raneaid|ransiteid|sscid|cjevent|awc|sharedid|rfsn|partner|partner_id|via|utm_medium=affiliate)(=|&|$)/i;
 const hostOf = (u) => { try { return new URL(u).hostname.toLowerCase().replace(/^www\./, ""); } catch { return ""; } };
+// Affiliate short links whose host is the network, not the shop: link (no https://) -> shop domain shown on the button.
+const AFFILIATE_REDIRECT_RX = /(^|\.)(sovrn\.co|viglink\.com)$/i;
+const AFFILIATE_SHOPS = {
+  "sovrn.co/fgmai4v": "leatherology.com", // DG-0152 Leatherology Large Jewelry Case
+};
 const isOff = (v) => /^(false|no|n|0|off)$/i.test(String(v ?? "").trim());
 function linkFor(o, asin) {
   const raw = String(o.my_url || "").trim();
   const mine = /^https?:\/\//i.test(raw) ? raw : (/^[\w-]+(\.[\w-]+)+(\/|$)/.test(raw) ? "https://" + raw : "");
   const host = hostOf(mine);
   if (host && !AMAZON_HOST_RX.test(host) && (isOff(o.amazon_enabled) || !asin)) {
+    // Affiliate network short links (Sovrn = sovrn.co) hide the shop's own domain, so the button
+    // keeps the shop's name from AFFILIATE_SHOPS and the link is marked sponsored.
+    if (AFFILIATE_REDIRECT_RX.test(host)) {
+      const key = mine.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/[?#].*$/, "").replace(/\/+$/, "").toLowerCase();
+      return { url: mine, shop: AFFILIATE_SHOPS[key] || host, affiliate: true, rel: "sponsored nofollow noopener" };
+    }
     const affiliate = AFFILIATE_PARAM_RX.test(mine);
     return { url: mine, shop: host, affiliate, rel: affiliate ? "sponsored nofollow noopener" : "nofollow noopener" };
   }
