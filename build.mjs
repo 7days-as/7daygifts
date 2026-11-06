@@ -703,7 +703,7 @@ function pageHome(ctx) {
 ${heroBlock(ctx, n)}
       <ul class="trust-strip" aria-label="Why 7 Day Gifts">
         <li><span class="trust-ico" aria-hidden="true">✓</span>Hand-picked</li>
-        <li><span class="trust-ico" aria-hidden="true">★</span>Top-rated on Amazon</li>
+        <li><span class="trust-ico" aria-hidden="true">★</span>Top-rated picks</li>
         <li><span class="trust-ico" aria-hidden="true">✦</span>New gifts weekly</li>
       </ul>
       <section class="section catalog">
@@ -927,7 +927,7 @@ function budgetPages(ctx) {
     const list = ctx.mainGifts.filter((p) => d.keys.includes(p.bandKey)).sort(byPop);
     return { rel: `budget/${d.slug}.html`, index: list.length >= 2, html: pageList(ctx, {
       h1: d.h1, title: `${d.h1}: Chosson, Kallah & Anniversary Gift Ideas | 7 Day Gifts`, eyebrow: `${list.length} picks · by budget`,
-      intro: `Hand-picked gifts ${d.label.toLowerCase().startsWith("under") ? d.label.toLowerCase() : "in the " + d.label + " range"} for the chosson, the kallah, your wife or your husband. Budgets are a guide; check the current price on Amazon.`,
+      intro: `Hand-picked gifts ${d.label.toLowerCase().startsWith("under") ? d.label.toLowerCase() : "in the " + d.label + " range"} for the chosson, the kallah, your wife or your husband. Budgets are a guide; check the current price before you buy.`,
       description: clip(`${list.length} hand-picked gift ideas ${d.label.toLowerCase().startsWith("under") ? d.label.toLowerCase() : d.label} for the chosson, the kallah and your spouse.`, 158),
       canonical: `${SITE}/budget/${d.slug}.html`, list, noindex: list.length < 2,
       crumbItems: [["/index.html", "Home"], ["/gift-gallery.html", "All Gifts"], [`/budget/${d.slug}.html`, d.label]],
