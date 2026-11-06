@@ -221,6 +221,75 @@
     ]
   },
   {
+    "slug": "personalized-gift-ideas",
+    "title": "Personalized Gifts: Thoughtful Ideas With Your Photo or Names",
+    "metaTitle": "Personalized Gifts With Your Photo or Names: Thoughtful Ideas",
+    "description": "Personalized gift ideas with your photo, names, initials or wedding date: blankets, photo keepsakes, jewelry boxes, engraved gifts for him and more.",
+    "intro": [
+      "A gift with your photo, your names or your wedding date on it says something a store-bought gift can't: that you sat down and thought about this person. It is usually the gift that gets kept, used and shown off long after the wrapping is gone.",
+      "Here are personalized ideas grouped by what goes on them, plus picks just for her and just for him. Most take a few extra days to make, so order these first."
+    ],
+    "sections": [
+      {
+        "heading": "With your photo",
+        "text": "Turn a favorite picture of the two of you into something to hold, hang up or snuggle under.",
+        "products": [
+          "DG-0042",
+          "DG-0063",
+          "DG-0056",
+          "DG-0028",
+          "DG-0026",
+          "DG-0141"
+        ],
+        "key": "pers-photo"
+      },
+      {
+        "heading": "With your names or wedding date",
+        "text": "Keepsakes for both of you and your new home, with your names, initials or the date.",
+        "products": [
+          "DG-0041",
+          "DG-0126",
+          "DG-0044",
+          "DG-0049"
+        ],
+        "key": "pers-names"
+      },
+      {
+        "heading": "Personalized for her",
+        "text": "Pretty, useful pieces with her name or initials on them.",
+        "products": [
+          "DG-0006",
+          "DG-0066",
+          "DG-0071",
+          "DG-0057",
+          "DG-0045",
+          "DG-0048"
+        ],
+        "key": "pers-her"
+      },
+      {
+        "heading": "Personalized for him",
+        "text": "Engraved and monogrammed things he will carry and use every day.",
+        "products": [
+          "DG-0014",
+          "DG-0054",
+          "DG-0122",
+          "DG-0015",
+          "DG-0046",
+          "DG-0065",
+          "DG-0053",
+          "DG-0061"
+        ],
+        "key": "pers-him"
+      }
+    ],
+    "tips": [
+      "Double-check spelling and dates before you order. A typo is the one thing you can't fix later.",
+      "Personalized items usually take a few extra days to make and ship, so order them before anything else.",
+      "Pick a clear, well-lit photo for photo gifts; faces close to the camera print best."
+    ]
+  },
+  {
     "slug": "chanukah-gifts-for-wife-or-husband",
     "hidden": true,
     "title": "Chanukah Gifts for Your Wife or Husband",
