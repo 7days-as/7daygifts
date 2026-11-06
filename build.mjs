@@ -512,6 +512,19 @@ const grid = (list, id = "") => `<div class="product-grid"${id ? ` id="${id}"` :
 const row = (list, id = "") => `<div class="scroller" data-scroller><button type="button" class="scroll-btn prev" aria-label="Scroll back">‹</button><div class="product-row"${id ? ` id="${id}"` : ""}>\n${list.map((p) => card(p)).join("\n")}\n</div><button type="button" class="scroll-btn next" aria-label="Scroll forward">›</button></div>`;
 const isCWName = (n) => /card|wrap/i.test(n);
 const byPop = (a, b) => b.popularity - a.popularity || a.order - b.order;
+// Wallet tracker cards sit right after the wallets they go in (category pages, and first in "You might also like" on wallet pages).
+const isWalletTracker = (p) => /wallet tracker|tracker card/i.test(`${p.name} ${p.title}`);
+const isWallet = (p) => /\bwallets?\b/i.test(p.name) && !isWalletTracker(p);
+function keepWithWallets(list) {
+  const trackers = list.filter(isWalletTracker);
+  if (!trackers.length) return list;
+  const rest = list.filter((p) => !isWalletTracker(p));
+  let last = -1;
+  rest.forEach((p, i) => { if (isWallet(p)) last = i; });
+  if (last < 0) return list;
+  rest.splice(last + 1, 0, ...trackers);
+  return rest;
+}
 
 function crumbs(items) {
   const html = `<nav class="breadcrumbs" aria-label="Breadcrumb">${items.map(([href, label], i) =>
@@ -817,7 +830,8 @@ function pageProduct(ctx, p) {
   const who = WHO[p.gender];
   const cat = ctx.categories.find((c) => c.name === p.category);
   const related = [
-    ...ctx.products.filter((q) => q.id !== p.id && q.category === p.category).sort(byPop),
+    ...(isWallet(p) ? ctx.products.filter((q) => q.id !== p.id && isWalletTracker(q)) : []),
+    ...ctx.products.filter((q) => q.id !== p.id && q.category === p.category && !(isWallet(p) && isWalletTracker(q))).sort(byPop),
     ...ctx.products.filter((q) => q.id !== p.id && q.category !== p.category && !q.side && (q.gender === p.gender || p.gender === "all")).sort(byPop),
   ].slice(0, 8);
   const guides = ctx.guides.filter((g) => g.sections.some((s) => s.products.includes(p.id)));
@@ -887,7 +901,7 @@ function cardSections(list) {
   return labels.map((l) => ({ title: l === "More cards" ? l : `${l} cards`, text: CARD_SECTION_TEXT[l] || "", list: list.filter((p) => (p.cardLabel || "More cards") === l) }));
 }
 function pageCategory(ctx, c) {
-  const list = [...c.products].sort(byPop);
+  const list = keepWithWallets([...c.products].sort(byPop));
   const intro = ctx.catIntros[c.name] || `Hand-picked ${c.name.toLowerCase()} gift ideas for the chosson, the kallah and your spouse.`;
   const others = ctx.categories.filter((o) => o.name !== c.name).map((o) => `<a class="chip" href="/category/${o.slug}.html">${esc(o.name)} <span class="chip-count">${o.products.length}</span></a>`).join("");
   const isCards = /card/i.test(c.name), isWrap = /wrap/i.test(c.name);
