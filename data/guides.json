@@ -272,15 +272,18 @@
         "text": "Engraved and monogrammed things he will carry and use every day.",
         "products": [
           "DG-0014",
+          "DG-0150",
           "DG-0054",
           "DG-0122",
           "DG-0015",
           "DG-0046",
           "DG-0065",
           "DG-0053",
-          "DG-0061"
+          "DG-0061",
+          "DG-0149"
         ],
-        "key": "pers-him"
+        "key": "pers-him",
+        "cap": 10
       }
     ],
     "tips": [
