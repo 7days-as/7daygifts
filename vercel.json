@@ -179,6 +179,26 @@
       "source": "/category/cologne-and-perfume",
       "destination": "/category/beauty-and-fragrance.html",
       "permanent": true
+    },
+    {
+      "source": "/guides/engagement-gifts-for-couples.html",
+      "destination": "/guides/",
+      "permanent": true
+    },
+    {
+      "source": "/guides/engagement-gifts-for-couples",
+      "destination": "/guides/",
+      "permanent": true
+    },
+    {
+      "source": "/guides/gifts-for-newlyweds.html",
+      "destination": "/guides/",
+      "permanent": true
+    },
+    {
+      "source": "/guides/gifts-for-newlyweds",
+      "destination": "/guides/",
+      "permanent": true
     }
   ]
 }

@@ -1035,7 +1035,7 @@ function pageGuide(ctx, g) {
 
 function pageGuides(ctx) {
   const bc = crumbs([["/index.html", "Home"], ["/guides/", "Gift Guides"]]);
-  return head({ ctx, title: "Gift Guides for the 7 Days Before the Wedding | 7 Day Gifts", description: "Practical gift guides for the week before the wedding, the chosson and the kallah, engagement and newlywed gifts, first anniversaries and gifts for him under $50.", canonical: SITE + "/guides/", jsonld: [bc.ld] }) + header("Gift Guides", ctx) + `
+  return head({ ctx, title: "Gift Guides for the 7 Days Before the Wedding | 7 Day Gifts", description: "Practical gift guides for the seven days before the wedding, and gifts for the chosson and the kallah.", canonical: SITE + "/guides/", jsonld: [bc.ld] }) + header("Gift Guides", ctx) + `
       <section class="section">
         ${bc.html}
         ${sectionHeader("Gift Guides", "Short, practical guides to help you choose.", "h1")}
