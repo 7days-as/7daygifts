@@ -852,13 +852,16 @@ function pageProduct(ctx, p) {
   if (cat) items.push([`/category/${cat.slug}.html`, cat.name === "Home" ? "For the Home" : cat.name]); else items.push(["/gift-gallery.html", "All Gifts"]);
   items.push([`/gifts/${p.slug}.html`, p.name]);
   const bc = crumbs(items);
-  const productLd = { "@context": "https://schema.org", "@type": "Product", name: p.title, description: p.description, sku: p.id, url: `${SITE}/gifts/${p.slug}.html` };
-  if (p.image) productLd.image = [p.image];
-  if (p.category) productLd.category = p.category;
+  // A gift idea page, not a store listing: the site shows price bands only and has no ratings, so a
+  // schema.org Product (which Google's product snippets require to carry offers, review or aggregateRating)
+  // would be flagged in Search Console. Describe the page as a WebPage about the gift instead.
+  const pageLd = { "@context": "https://schema.org", "@type": "WebPage", name: p.title, description: p.description, url: `${SITE}/gifts/${p.slug}.html`,
+    about: { "@type": "Thing", name: p.title, description: p.description } };
+  if (p.image) { pageLd.about.image = p.image; pageLd.primaryImageOfPage = { "@type": "ImageObject", url: p.image }; }
   const whoLine = p.gender === "all" ? "Either of you" : p.gender === "him" ? "Him (the chosson or your husband)" : "Her (the kallah or your wife)";
   const occ = p.occasions.map((k) => OCCASIONS.find((o) => o.key === k)).filter(Boolean);
   const title = `${clip(p.name, 48)} · Gift Idea ${p.gender === "all" ? "for Couples" : "for " + (p.gender === "him" ? "Him" : "Her")} | 7 Day Gifts`;
-  return head({ ctx, title, description: clip(p.description, 158), canonical: `${SITE}/gifts/${p.slug}.html`, image: p.image, type: "product", jsonld: [productLd, bc.ld] }) + header("", ctx) + `
+  return head({ ctx, title, description: clip(p.description, 158), canonical: `${SITE}/gifts/${p.slug}.html`, image: p.image, type: "product", jsonld: [pageLd, bc.ld] }) + header("", ctx) + `
       <section class="section">
         ${bc.html}
         <article class="product-detail" data-id="${esc(p.id)}" data-category="${esc(p.category)}" data-gender="${p.gender}">
