@@ -412,7 +412,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta name="theme-color" content="#ffffff" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "17";
+const ASSET_V = "18";
 
 function chanukahBand(ctx) {
   return ""; // Chanukah is not promoted on the site (Avrohom, Nov 4); the pages stay reachable by direct link
@@ -466,7 +466,7 @@ function header(active, ctx) {
 function footer(ctx) {
   const year = new Date().getFullYear();
   const cats = ctx.categories.filter((c) => c.indexable).map((c) => `<a href="/category/${c.slug}.html">${esc(c.name)}</a>`).join("");
-  const guides = ctx.guides.map((g) => `<a href="/guides/${g.slug}.html">${esc(shortGuide(g.title))}</a>`).join("");
+  const guides = ctx.guides.map((g) => `<a href="/guides/${g.slug}.html">${esc(guideName(g))}</a>`).join("");
   return `
     </main>
     <footer class="site-footer">
@@ -493,6 +493,8 @@ function footer(ctx) {
 `;
 }
 const shortGuide = (t) => t.split(":")[0];
+// a guide can set its own short name ("short" in data/guides.json) for menus, chips and breadcrumbs
+const guideName = (g) => g.short || shortGuide(g.title);
 function guideCard(ctx, g) {
   const ids = [...new Set(g.sections.flatMap((s) => s.products))];
   const pics = ids.map((id) => ctx.products.find((p) => p.id === id)).filter((p) => p && p.image).slice(0, 4);
@@ -839,6 +841,41 @@ function pageWishlist(ctx) {
 
 // "You might also like" never crosses him/her: a men's cologne page doesn't suggest a women's perfume, and the other way round.
 const fitsWho = (p, q) => p.gender === "all" || q.gender === "all" || !p.gender || !q.gender || q.gender === p.gender;
+// ---------- Amazon Wedding Registry box (Amazon pays a bounty for each registry started through the tag) ----------
+const REGISTRY_URL = `https://www.amazon.com/wedding?tag=${AFFILIATE_TAG}`;
+function registryBox() {
+  return `<aside class="registry-box" aria-label="Amazon Wedding Registry">
+          <div class="registry-text"><p class="registry-title">Setting up your registry?</p><p>An Amazon Wedding Registry keeps everything you need for your new home on one list that family and friends can shop from.</p></div>
+          <a class="btn-pill btn-primary registry-btn" href="${esc(REGISTRY_URL)}" target="_blank" rel="sponsored nofollow noopener">Start an Amazon Wedding Registry</a>
+          <p class="registry-note">As an Amazon Associate we may earn from qualifying sign-ups and purchases.</p>
+        </aside>`;
+}
+
+// ---------- in-body links from a gift page back to the 7-day plan and the guides ----------
+const PLAN_SLUG = "7-day-gift-ideas-before-the-wedding";
+const DAY7_SLUG = "day-7-special-gift-ideas";
+const PERSON_GUIDES = { her: ["gifts-for-the-kallah", "gifts-for-the-bride-from-the-groom"], him: ["gifts-for-the-chosson", "gifts-for-the-groom-from-the-bride"], all: ["gifts-for-the-kallah", "gifts-for-the-chosson"] };
+function planLinks(ctx, p) {
+  const plan = ctx.guides.find((g) => g.slug === PLAN_SLUG);
+  if (!plan) return { linked: new Set(), html: "" };
+  const daySec = plan.sections.find((s) => s.products.includes(p.id) && /^Day\s*\d/i.test(s.heading));
+  const day = daySec ? daySec.heading.match(/^Day\s*(\d)/i)[1] : null;
+  const day7 = ctx.guides.find((g) => g.slug === DAY7_SLUG);
+  const inDay7 = day7 && day7.sections.some((s) => s.products.includes(p.id));
+  const lead = inDay7
+    ? `This is one of our picks for <a href="/guides/${DAY7_SLUG}.html">Day 7: the special one</a>, the bigger gift for the last of the 7 days before the wedding.`
+    : day
+      ? `This gift is in our <a href="/guides/${PLAN_SLUG}.html">7-day plan</a> for <a href="/guides/${PLAN_SLUG}.html#day-${day}">${esc(daySec.heading)}</a>.`
+      : `Our <a href="/guides/${PLAN_SLUG}.html">7-day plan</a> has one gift idea for each of the 7 days before the wedding.`;
+  const more = [
+    ...(inDay7 ? [[`/guides/${PLAN_SLUG}.html`, "The full 7-day plan"]] : []),
+    ...(PERSON_GUIDES[p.gender] || []).map((slug) => ctx.guides.find((g) => g.slug === slug)).filter(Boolean).map((g) => [`/guides/${g.slug}.html`, guideName(g)]),
+    ...(day7 && !inDay7 && p.bandKey && ["100-200", "200p"].includes(p.bandKey) ? [[`/guides/${DAY7_SLUG}.html`, "Day 7: the special one"]] : []),
+  ];
+  const linked = new Set([`/guides/${PLAN_SLUG}.html`, ...(inDay7 ? [`/guides/${DAY7_SLUG}.html`] : []), ...more.map(([h]) => h)]);
+  return { linked, html: `<div class="plan-box"><p class="plan-box-title">Planning the 7 days before the wedding?</p><p>${lead}</p>${more.length ? `<p class="plan-box-links">${more.map(([h, t]) => `<a href="${h}">${esc(t)}</a>`).join(" · ")}</p>` : ""}</div>` };
+}
+
 function pageProduct(ctx, p) {
   const who = WHO[p.gender];
   const cat = ctx.categories.find((c) => c.name === p.category);
@@ -847,7 +884,9 @@ function pageProduct(ctx, p) {
     ...ctx.products.filter((q) => q.id !== p.id && q.category === p.category && !(isWallet(p) && isWalletTracker(q)) && fitsWho(p, q)).sort(byPop),
     ...ctx.products.filter((q) => q.id !== p.id && q.category !== p.category && !q.side && (q.gender === p.gender || p.gender === "all")).sort(byPop),
   ].slice(0, 8);
-  const guides = ctx.guides.filter((g) => g.sections.some((s) => s.products.includes(p.id)));
+  const plan = planLinks(ctx, p);
+  // "Featured in" lists the other guides this gift is in (the plan box above it already links the main ones)
+  const guides = ctx.guides.filter((g) => g.sections.some((s) => s.products.includes(p.id)) && !plan.linked.has(`/guides/${g.slug}.html`));
   const items = [["/index.html", "Home"]];
   if (cat) items.push([`/category/${cat.slug}.html`, cat.name === "Home" ? "For the Home" : cat.name]); else items.push(["/gift-gallery.html", "All Gifts"]);
   items.push([`/gifts/${p.slug}.html`, p.name]);
@@ -886,7 +925,8 @@ function pageProduct(ctx, p) {
             </div>
             ${p.title !== p.name && !p.shop ? `<p class="product-note">Amazon listing: ${esc(p.title)}</p>` : ""}
             ${p.shop ? `<p class="product-note">Sold by ${esc(p.shop)}. Price, shipping and returns are set by the shop.${p.rel.includes("sponsored") ? " We may earn a commission if you buy through this link." : ""}</p>` : `<p class="product-note">Price and delivery are shown on Amazon and can change. As an Amazon Associate we may earn from qualifying purchases.</p>`}
-            ${guides.length ? `<p class="product-guides">Featured in: ${guides.map((g) => `<a href="/guides/${g.slug}.html">${esc(shortGuide(g.title))}</a>`).join(" · ")}</p>` : ""}
+            ${plan.html}
+            ${guides.length ? `<p class="product-guides">Also featured in: ${guides.map((g) => `<a href="/guides/${g.slug}.html">${esc(guideName(g))}</a>`).join(" · ")}</p>` : ""}
           </div>
         </article>
       </section>
@@ -937,7 +977,7 @@ function pageWho(ctx, key) {
   const w = WHO[key];
   const list = ctx.mainGifts.filter((p) => (key === "all" ? p.gender === "all" : p.gender === key || p.gender === "all")).sort((a, b) => (a.gender === key ? 0 : 1) - (b.gender === key ? 0 : 1) || byPop(a, b));
   const guideLinks = key === "her" ? ["gifts-for-the-kallah", "7-day-gift-ideas-before-the-wedding"] : key === "him" ? ["gifts-for-the-chosson", "7-day-gift-ideas-before-the-wedding"] : ["7-day-gift-ideas-before-the-wedding", "gifts-for-the-kallah", "gifts-for-the-chosson"];
-  const gl = ctx.guides.filter((g) => guideLinks.includes(g.slug)).map((g) => `<a class="chip" href="/guides/${g.slug}.html">${esc(shortGuide(g.title))}</a>`).join("");
+  const gl = ctx.guides.filter((g) => guideLinks.includes(g.slug)).map((g) => `<a class="chip" href="/guides/${g.slug}.html">${esc(guideName(g))}</a>`).join("");
   return pageList(ctx, {
     h1: w.h1, title: `${w.title} | 7 Day Gifts`, description: clip(`${w.blurb} ${list.length} hand-picked ideas.`, 158), eyebrow: `${list.length} picks`,
     canonical: `${SITE}/for/${w.slug}.html`, intro: w.blurb, list,
@@ -1009,25 +1049,29 @@ function chanukahPages(ctx) {
 
 function pageGuide(ctx, g) {
   const map = new Map(ctx.products.map((p) => [p.id, p]));
-  const bc = crumbs([["/index.html", "Home"], ["/guides/", "Gift Guides"], [`/guides/${g.slug}.html`, shortGuide(g.title)]]);
+  const bc = crumbs([["/index.html", "Home"], ["/guides/", "Gift Guides"], [`/guides/${g.slug}.html`, guideName(g)]]);
   const sections = g.sections.map((s) => {
     const list = s.products.map((id) => map.get(id)).filter(Boolean);
     if (!list.length) return "";
     const day = s.heading.match(/^Day\s*(\d)/i);
-    return `<section class="guide-section"${day ? ` id="day-${day[1]}"` : ""}><h2>${esc(s.heading)}</h2><p>${esc(s.text)}</p>${grid(list)}</section>`;
+    const more = Array.isArray(s.more) ? `<p class="list-more"><a class="see-all" href="${esc(s.more[0])}">${esc(s.more[1])}${ICON.arrow}</a></p>` : "";
+    return `<section class="guide-section"${day ? ` id="day-${day[1]}"` : s.id ? ` id="${esc(s.id)}"` : ""}><h2>${esc(s.heading)}</h2><p>${esc(s.text)}</p>${grid(list)}${more}</section>`;
   }).join("\n");
   const all = g.sections.flatMap((s) => s.products).map((id) => map.get(id)).filter(Boolean);
   const ld = { "@context": "https://schema.org", "@type": "Article", headline: g.title, description: g.description, url: `${SITE}/guides/${g.slug}.html`,
     image: all[0]?.image ? [all[0].image] : undefined, publisher: { "@type": "Organization", name: "7 Day Gifts", logo: { "@type": "ImageObject", url: SITE + "/logo.png" } }, author: { "@type": "Organization", name: "7 Day Gifts" } };
-  const others = ctx.guides.filter((o) => o.slug !== g.slug).map((o) => `<a class="chip" href="/guides/${o.slug}.html">${esc(shortGuide(o.title))}</a>`).join("");
+  const others = ctx.guides.filter((o) => o.slug !== g.slug).map((o) => `<a class="chip" href="/guides/${o.slug}.html">${esc(guideName(o))}</a>`).join("");
   return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, jsonld: [ld, bc.ld] }) + header("Gift Guides", ctx) + `
       <section class="section guide">
         ${bc.html}
         <p class="eyebrow">Gift guide</p>
         <h1 class="guide-title">${esc(g.title)}</h1>
         <div class="guide-intro">${g.intro.map((t) => `<p>${esc(t)}</p>`).join("")}</div>
+        ${g.links?.length ? `<nav class="guide-links" aria-label="Related pages"><span class="guide-links-label">Also see:</span> ${g.links.map(([h, t]) => `<a class="chip" href="${esc(h)}">${esc(t)}</a>`).join(" ")}</nav>` : ""}
         ${sections}
+        ${g.registry ? registryBox() : ""}
         ${g.tips?.length ? `<section class="guide-section callout"><h2>Tips</h2><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>` : ""}
+        ${g.faq?.length ? `<section class="guide-section guide-faq"><h2>Questions people ask</h2>${g.faq.map((f) => `<div class="faq-item"><h3>${esc(f.q)}</h3><p>${esc(f.a)}</p></div>`).join("")}</section>` : ""}
         <p class="guide-more">Want to see everything? <a href="/gift-gallery.html">Browse all ${ctx.mainGifts.length} gifts</a>, try the <a href="/gift-finder.html">3-tap gift finder</a>, or shop <a href="/for/her.html">gifts for her</a> and <a href="/for/him.html">gifts for him</a>.</p>
         <div class="more-block"><h2 class="more-title">More gift guides</h2><div class="chip-row">${others}</div></div>
       </section>` + footer(ctx);

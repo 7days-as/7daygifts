@@ -87,7 +87,11 @@
           "DG-0034",
           "DG-0054"
         ],
-        "key": "day7-special"
+        "key": "day7-special",
+        "more": [
+          "/guides/day-7-special-gift-ideas.html",
+          "See 12 bigger Day 7 gifts"
+        ]
       }
     ],
     "tips": [
@@ -95,6 +99,96 @@
       "Plan who will deliver each gift. A sibling, friend or parent often brings it over, so have everything wrapped and labeled by day.",
       "A short handwritten note with each gift often means more than the gift itself.",
       "Mix price points. A few small gifts and one bigger one usually feels more balanced than seven expensive ones."
+    ],
+    "registry": true
+  },
+  {
+    "slug": "day-7-special-gift-ideas",
+    "short": "Day 7: The Special One",
+    "title": "Day 7 Gift Ideas: The Special One for Your Kallah or Chosson",
+    "metaTitle": "Day 7 Gift Ideas: A Bigger Gift for Your Kallah or Chosson",
+    "description": "Day 7 gift ideas: a dozen bigger gifts for your kallah or chosson in the $100–$200 and $200+ ranges, from a photo frame to smart glasses and a watch.",
+    "registry": true,
+    "intro": [
+      "The last of the seven gifts is often the one people put the most thought into. It can be a bigger gift, something meant to last for years, or something you will both use every day of your new life together.",
+      "Here are our favorite bigger picks, all in the $100–$200 and $200+ ranges: for her, for him, and a few that work for either of you. Still planning the rest of the week? Start with the full 7-day plan."
+    ],
+    "links": [
+      [
+        "/guides/7-day-gift-ideas-before-the-wedding.html",
+        "The full 7-day plan"
+      ],
+      [
+        "/guides/gifts-for-the-kallah.html",
+        "Gifts for the kallah"
+      ],
+      [
+        "/guides/gifts-for-the-chosson.html",
+        "Gifts for the chosson"
+      ],
+      [
+        "/budget/100-to-200.html",
+        "$100–$200 gifts"
+      ],
+      [
+        "/budget/200-plus.html",
+        "$200+ gifts"
+      ]
+    ],
+    "sections": [
+      {
+        "heading": "For her, from her chosson",
+        "key": "special-her",
+        "text": "Something she will see every day: a frame that fills with your photos, a jewelry case for the pieces she loves, a fragrance she would not buy for herself, or a Kindle for quiet evenings.",
+        "products": [
+          "DG-0034",
+          "DG-0152",
+          "DG-0001",
+          "DG-0083"
+        ]
+      },
+      {
+        "heading": "For him, from his kallah",
+        "key": "special-him",
+        "text": "A classic fragrance, smart glasses that take photos and play music, a camera drone for trips together, or a weekender bag for sheva brachos week and beyond.",
+        "products": [
+          "DG-0039",
+          "DG-0186",
+          "DG-0128",
+          "DG-0010"
+        ]
+      },
+      {
+        "heading": "For either of you",
+        "key": "special-both",
+        "text": "Tech that works for a chosson or a kallah: a watch, noise-cancelling headphones, earbuds, or a pocket camera to film your first year.",
+        "products": [
+          "DG-0033",
+          "DG-0187",
+          "DG-0032",
+          "DG-0191"
+        ]
+      }
+    ],
+    "tips": [
+      "Order early. Bigger gifts can sell out, so check each listing's delivery date before you count on it.",
+      "Pair it with a handwritten note. On the last day, the note is often the part they keep.",
+      "Not sure about the style? Choose something with easy returns and tuck the gift receipt in the box.",
+      "Special does not have to mean expensive. A personalized keepsake with your photos or your wedding date can mean just as much."
+    ],
+    "faq": [
+      {
+        "q": "What do you give on Day 7?",
+        "a": "Usually the most meaningful or the biggest gift of the week: a photo frame, a jewelry case, a watch, a fragrance or good headphones. Some people give it on the wedding day itself instead."
+      },
+      {
+        "q": "How much should the Day 7 gift cost?",
+        "a": "There is no set amount. Many people spend a little more on the last gift than on the other six. The ideas on this page are in the $100–$200 and $200+ ranges, and a personalized keepsake can be just as special."
+      },
+      {
+        "q": "Can the Day 7 gift be practical?",
+        "a": "Yes. A weekender bag or a pair of headphones gets used for years, and it reminds them of you every time."
+      }
     ]
   },
   {
@@ -157,7 +251,8 @@
     "tips": [
       "If you are not sure about her taste in fragrance or style, ask her sister or a close friend.",
       "Personalized items need extra time to arrive, so order them first."
-    ]
+    ],
+    "registry": true
   },
   {
     "slug": "gifts-for-the-chosson",
@@ -220,6 +315,331 @@
     "tips": [
       "Think about what he already uses every day (a wallet, a phone, a pen) and upgrade it.",
       "Engraving and monograms take extra time, so order those first."
+    ],
+    "registry": true
+  },
+  {
+    "slug": "gifts-for-the-groom-from-the-bride",
+    "title": "Gifts for the Groom from the Bride: Ideas He Will Actually Use",
+    "metaTitle": "Gifts for the Groom from the Bride: Thoughtful Ideas He'll Use",
+    "description": "Gifts for the groom from the bride: personalized gifts with his name, everyday carry, gear for the trip after the wedding, fun gadgets and one bigger gift.",
+    "registry": true,
+    "intro": [
+      "Looking for a gift for your groom? The best ones are things he will actually use and that remind him of you: something with his name on it, something for his pocket or his desk, or something for the trip after the wedding.",
+      "If you are giving a gift on each of the 7 days before the wedding, these ideas fit right into our 7-day plan. Every gift shows its budget range, so it is easy to mix a few small gifts with one bigger one."
+    ],
+    "links": [
+      [
+        "/guides/7-day-gift-ideas-before-the-wedding.html",
+        "The 7-day plan"
+      ],
+      [
+        "/guides/gifts-for-the-chosson.html",
+        "Gifts for the chosson"
+      ],
+      [
+        "/guides/day-7-special-gift-ideas.html",
+        "Day 7: the special one"
+      ],
+      [
+        "/guides/gifts-for-him-under-50.html",
+        "Gifts for him under $50"
+      ],
+      [
+        "/for/him.html",
+        "All gifts for him"
+      ]
+    ],
+    "sections": [
+      {
+        "heading": "Personalized, with his name or initials",
+        "key": "groom-personal",
+        "text": "Engraved and monogrammed gifts feel personal and are easy to give. Order these first, since personalizing adds a few days.",
+        "products": [
+          "DG-0064",
+          "DG-0015",
+          "DG-0014",
+          "DG-0149",
+          "DG-0054",
+          "DG-0065"
+        ]
+      },
+      {
+        "heading": "For every day",
+        "key": "groom-everyday",
+        "text": "Things he will carry or reach for every day, from a slim wallet to sterling silver collar stays for his wedding shirt.",
+        "products": [
+          "DG-0050",
+          "DG-0062",
+          "DG-0154",
+          "DG-0188",
+          "DG-0077"
+        ]
+      },
+      {
+        "heading": "For the trip after the wedding",
+        "key": "groom-travel",
+        "text": "Practical gear for sheva brachos week and any travel after it.",
+        "products": [
+          "DG-0010",
+          "DG-0067",
+          "DG-0072",
+          "DG-0139"
+        ]
+      },
+      {
+        "heading": "Something fun",
+        "key": "groom-fun",
+        "text": "Gadgets and hobby gifts for his free time.",
+        "products": [
+          "DG-0189",
+          "DG-0181",
+          "DG-0140",
+          "DG-0073"
+        ]
+      },
+      {
+        "heading": "A bigger gift",
+        "key": "groom-big",
+        "text": "For the last of the 7 days, or for the wedding day itself.",
+        "products": [
+          "DG-0039",
+          "DG-0186",
+          "DG-0128",
+          "DG-0187"
+        ],
+        "more": [
+          "/guides/day-7-special-gift-ideas.html",
+          "More Day 7 ideas"
+        ]
+      }
+    ],
+    "tips": [
+      "Think about what he already uses every day, then find a nicer version of it.",
+      "Add his initials or your wedding date where you can. A few letters make an everyday gift feel personal.",
+      "Order personalized items first and check each listing's delivery estimate.",
+      "A short note from you with each gift goes a long way."
+    ],
+    "faq": [
+      {
+        "q": "What is a good gift for the groom from the bride?",
+        "a": "Something he will use often and that feels personal: a monogrammed wallet, an engraved watch box, a leather AirPods case with his initials, or a weekender bag for the trip after the wedding."
+      },
+      {
+        "q": "How much should the bride spend on a gift for the groom?",
+        "a": "Whatever feels comfortable. Many brides give a few smaller gifts in the Under $25 and $25–$50 ranges and one bigger gift. Every gift on this page shows its budget range."
+      },
+      {
+        "q": "When does the bride give the groom a gift?",
+        "a": "Many brides give a gift in the week before the wedding, and some give a small gift on each of the 7 days before it. Our 7-day plan has an idea for each day."
+      }
+    ]
+  },
+  {
+    "slug": "gifts-for-the-bride-from-the-groom",
+    "title": "Gifts for the Bride from the Groom: Ideas She Will Treasure",
+    "metaTitle": "Gifts for the Bride from the Groom: Thoughtful Ideas She'll Love",
+    "description": "Gifts for the bride from the groom: keepsakes with your photos, jewelry boxes, fragrance, cozy gifts and travel pieces for the wedding week and beyond.",
+    "registry": true,
+    "intro": [
+      "Looking for a gift for your bride? The ones she will treasure are personal: a keepsake with your photos and words, a beautiful place for her jewelry, or something cozy for the end of a long day of wedding planning.",
+      "If you are giving a gift on each of the 7 days before the wedding, these ideas fit right into our 7-day plan. Every gift shows its budget range, so it is easy to mix a few small gifts with one bigger one."
+    ],
+    "links": [
+      [
+        "/guides/7-day-gift-ideas-before-the-wedding.html",
+        "The 7-day plan"
+      ],
+      [
+        "/guides/gifts-for-the-kallah.html",
+        "Gifts for the kallah"
+      ],
+      [
+        "/guides/day-7-special-gift-ideas.html",
+        "Day 7: the special one"
+      ],
+      [
+        "/guides/gift-ideas-for-her.html",
+        "Gift ideas for her"
+      ],
+      [
+        "/for/her.html",
+        "All gifts for her"
+      ]
+    ],
+    "sections": [
+      {
+        "heading": "Keepsakes with your photos and words",
+        "key": "bride-keepsakes",
+        "text": "Gifts that are really about the two of you. The Open When letter box is one of the most popular gifts on 7 Day Gifts.",
+        "products": [
+          "DG-0049",
+          "DG-0056",
+          "DG-0063",
+          "DG-0034",
+          "DG-0045"
+        ]
+      },
+      {
+        "heading": "For her jewelry",
+        "key": "bride-jewelry",
+        "text": "A jewelry case, roll or tray she will use every day, several with her initials.",
+        "products": [
+          "DG-0152",
+          "DG-0006",
+          "DG-0007",
+          "DG-0066",
+          "DG-0057"
+        ]
+      },
+      {
+        "heading": "Fragrance",
+        "key": "bride-fragrance",
+        "text": "A fragrance she loves but would not buy for herself. Not sure of her taste? Ask her sister or a close friend.",
+        "products": [
+          "DG-0001",
+          "DG-0004",
+          "DG-0159",
+          "DG-0162"
+        ]
+      },
+      {
+        "heading": "Cozy and everyday",
+        "key": "bride-cozy",
+        "text": "Soft, useful gifts for quiet evenings at home.",
+        "products": [
+          "DG-0102",
+          "DG-0075",
+          "DG-0052",
+          "DG-0083"
+        ]
+      },
+      {
+        "heading": "For the trip after the wedding",
+        "key": "bride-travel",
+        "text": "Pieces that make sheva brachos week and any travel after it easier.",
+        "products": [
+          "DG-0035",
+          "DG-0011",
+          "DG-0071",
+          "DG-0008"
+        ],
+        "more": [
+          "/guides/day-7-special-gift-ideas.html",
+          "Looking for a bigger gift? See Day 7 ideas"
+        ]
+      }
+    ],
+    "tips": [
+      "Notice what she already loves, then choose something that fits it.",
+      "Add her initials or your wedding date where you can. A few letters turn a nice gift into a keepsake.",
+      "Order personalized items first and check each listing's delivery estimate.",
+      "A short note from you with each gift often means more than the gift itself."
+    ],
+    "faq": [
+      {
+        "q": "What is a good gift for the bride from the groom?",
+        "a": "Something personal and lasting: a keepsake with your photos, a jewelry case with her initials, a digital photo frame you can fill together, or a fragrance she loves."
+      },
+      {
+        "q": "How much should the groom spend on a gift for the bride?",
+        "a": "Whatever feels comfortable. Many grooms give a few smaller gifts and one bigger gift. Every gift on this page shows its budget range."
+      },
+      {
+        "q": "Should the gift be sentimental or practical?",
+        "a": "Both work. Over the 7 days before the wedding, many grooms mix them: something sentimental first, practical gifts in the middle, and a bigger gift on Day 7."
+      }
+    ]
+  },
+  {
+    "slug": "engagement-gifts-for-your-fiance-or-fiancee",
+    "short": "Engagement Gifts for Your Fiancé or Fiancée",
+    "title": "Engagement Gifts for Your Fiancé or Fiancée: Ideas for Him and Her",
+    "metaTitle": "Engagement Gift Ideas for Your Fiancé or Fiancée",
+    "description": "Engagement gift ideas for your fiancé or fiancée: a watch and engraved gifts for him, jewelry boxes and keepsakes for her, and gifts to share while you plan.",
+    "intro": [
+      "You just got engaged, and you want a gift that marks the moment. Whether it is for your fiancé or your fiancée, the best engagement gifts are personal and lasting: something they will still use or keep long after the wedding.",
+      "Below are ideas for him, for her, and for the two of you to share while you plan. When the wedding gets close, our 7-day plan has an idea for each of the 7 days before it."
+    ],
+    "links": [
+      [
+        "/guides/7-day-gift-ideas-before-the-wedding.html",
+        "The 7-day plan"
+      ],
+      [
+        "/guides/gifts-for-the-groom-from-the-bride.html",
+        "Gifts for the groom"
+      ],
+      [
+        "/guides/gifts-for-the-bride-from-the-groom.html",
+        "Gifts for the bride"
+      ],
+      [
+        "/guides/personalized-gift-ideas.html",
+        "Personalized gifts"
+      ]
+    ],
+    "sections": [
+      {
+        "heading": "For your fiancé",
+        "id": "for-him",
+        "key": "fiance-him",
+        "text": "A watch is a popular engagement gift for him, and an engraved watch box makes it feel complete. Engraved pens, monogrammed wallets and a leather AirPods case are lovely smaller options.",
+        "products": [
+          "DG-0033",
+          "DG-0149",
+          "DG-0015",
+          "DG-0054",
+          "DG-0064",
+          "DG-0062"
+        ]
+      },
+      {
+        "heading": "For your fiancée",
+        "id": "for-her",
+        "key": "fiance-her",
+        "text": "A place for her jewelry, a keepsake frame or letter box, or a fragrance she will always connect with this time.",
+        "products": [
+          "DG-0152",
+          "DG-0006",
+          "DG-0034",
+          "DG-0049",
+          "DG-0045",
+          "DG-0001"
+        ]
+      },
+      {
+        "heading": "For the two of you, while you plan",
+        "id": "for-both",
+        "key": "fiance-both",
+        "text": "Something to share during the engagement: a question-a-day journal, a scrapbook for your adventures, or an instant camera to capture it all.",
+        "products": [
+          "DG-0085",
+          "DG-0182",
+          "DG-0184",
+          "DG-0041",
+          "DG-0192"
+        ]
+      }
+    ],
+    "tips": [
+      "Buying a watch or jewelry? Find out the size and style first, quietly, from a sibling or a close friend.",
+      "Engraving your engagement date makes even a small gift a keepsake.",
+      "Save the biggest gift for the wedding week. Our Day 7 page has bigger ideas."
+    ],
+    "faq": [
+      {
+        "q": "What is a good engagement gift for my fiancé?",
+        "a": "A watch, an engraved watch box, a monogrammed wallet or an engraved pen: gifts he will use every day, especially with your engagement date on them."
+      },
+      {
+        "q": "What is a good engagement gift for my fiancée?",
+        "a": "A jewelry case for her new pieces, a digital photo frame, an Open When letter box, or a fragrance she loves."
+      },
+      {
+        "q": "How much should an engagement gift cost?",
+        "a": "There is no rule. The ideas here range from Under $25 to $200+, and every gift shows its budget range."
+      }
     ]
   },
   {
