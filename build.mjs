@@ -368,7 +368,7 @@ const ICON = {
   arrow: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h13M13 6l6 6l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 
-function head({ title, description, canonical, image, type = "website", noindex = false, seasonal = false, jsonld = [], ctx }) {
+function head({ title, description, canonical, image, type = "website", noindex = false, seasonal = false, jsonld = [], ctx, keywords = "" }) {
   let robots = "";
   if (PREVIEW) robots = `<meta name="robots" content="noindex, nofollow" />`;
   else if (seasonal) robots = `<meta name="robots" content="noindex, follow" />`; // Chanukah pages: direct link only (Avrohom, Nov 4)
@@ -389,7 +389,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <title>${esc(title)}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="${esc(description)}" />
-  <meta name="theme-color" content="#1F3358" />
+${keywords ? `  <meta name="keywords" content="${esc(keywords)}" />\n` : ""}  <meta name="theme-color" content="#1F3358" />
   <meta name="p:domain_verify" content="289cbd6418ce7609edcc9ed80ddc524b"/>
   ${robots}${PREVIEW ? '\n  <meta name="7dg-preview" content="1" />' : ""}
   <script>${seasonal ? SEASON_SCRIPT : "window.__chanukah={on:false};"}</script>
@@ -401,7 +401,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
+${keywords ? `  <meta name="twitter:description" content="${esc(description)}" />\n` : ""}  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" />
   <link rel="stylesheet" href="/style.css?v=${ASSET_V}" />
@@ -1027,7 +1027,7 @@ function pageGuide(ctx, g) {
   const faqHtml = faq.length ? `<section class="guide-section guide-faq"><h2>${esc(g.faqHeading || "Questions people ask")}</h2>${faq.map((f) => `<div class="faq-item"><h3>${esc(f.q)}</h3><p>${esc(f.a)}</p></div>`).join("")}</section>` : "";
   const faqLd = faq.length ? { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) } : null;
   const seeAlso = (g.seeAlso || []).map(([href, label]) => `<a class="chip" href="${esc(href)}">${esc(label)}</a>`).join("");
-  return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, jsonld: [ld, ...(faqLd ? [faqLd] : []), bc.ld] }) + header("Gift Guides", ctx) + `
+  return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, keywords: g.keywords || "", jsonld: [ld, ...(faqLd ? [faqLd] : []), bc.ld] }) + header("Gift Guides", ctx) + `
       <section class="section guide">
         ${bc.html}
         <p class="eyebrow">Gift guide</p>
