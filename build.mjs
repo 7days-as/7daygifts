@@ -390,6 +390,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="${esc(description)}" />
   <meta name="theme-color" content="#1F3358" />
+  <meta name="p:domain_verify" content="289cbd6418ce7609edcc9ed80ddc524b"/>
   ${robots}${PREVIEW ? '\n  <meta name="7dg-preview" content="1" />' : ""}
   <script>${seasonal ? SEASON_SCRIPT : "window.__chanukah={on:false};"}</script>
   <link rel="canonical" href="${esc(canonical)}" />
