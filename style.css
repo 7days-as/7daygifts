@@ -559,3 +559,9 @@ html.menu-locked,html.menu-locked body{overflow:hidden}
 .contact-phone{color:var(--muted);margin-top:18px;font-size:15px}
 .email-form button[type="submit"]:disabled{opacity:.65;cursor:wait}
 @media (max-width:520px){.contact-card{padding:22px 18px}.contact-send{justify-self:stretch}}
+
+/* ---------- Guide FAQ (search landing pages) ---------- */
+.guide-faq .faq-item{padding:16px 0;border-top:1px solid var(--border-soft)}
+.guide-faq .faq-item:first-of-type{border-top:0;padding-top:6px}
+.guide-faq h3{font-family:var(--sans);font-size:17px;font-weight:600;color:var(--primary);margin:0 0 6px}
+.guide-faq p{margin:0;color:#45526A}
