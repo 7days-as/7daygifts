@@ -368,7 +368,7 @@ const ICON = {
   arrow: `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h13M13 6l6 6l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
 
-function head({ title, description, canonical, image, type = "website", noindex = false, seasonal = false, jsonld = [], ctx }) {
+function head({ title, description, canonical, image, type = "website", noindex = false, seasonal = false, jsonld = [], ctx, keywords = "" }) {
   let robots = "";
   if (PREVIEW) robots = `<meta name="robots" content="noindex, nofollow" />`;
   else if (seasonal) robots = `<meta name="robots" content="noindex, follow" />`; // Chanukah pages: direct link only (Avrohom, Nov 4)
@@ -389,7 +389,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <title>${esc(title)}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="${esc(description)}" />
-  <meta name="theme-color" content="#1F3358" />
+${keywords ? `  <meta name="keywords" content="${esc(keywords)}" />\n` : ""}  <meta name="theme-color" content="#1F3358" />
   <meta name="p:domain_verify" content="289cbd6418ce7609edcc9ed80ddc524b"/>
   ${robots}${PREVIEW ? '\n  <meta name="7dg-preview" content="1" />' : ""}
   <script>${seasonal ? SEASON_SCRIPT : "window.__chanukah={on:false};"}</script>
@@ -401,7 +401,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:image" content="${esc(img)}" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
+${keywords ? `  <meta name="twitter:description" content="${esc(description)}" />\n` : ""}  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" />
   <link rel="stylesheet" href="/style.css?v=${ASSET_V}" />
@@ -413,7 +413,7 @@ function head({ title, description, canonical, image, type = "website", noindex 
   <meta name="theme-color" content="#ffffff" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "17";
+const ASSET_V = "18";
 
 function chanukahBand(ctx) {
   return ""; // Chanukah is not promoted on the site (Avrohom, Nov 4); the pages stay reachable by direct link
@@ -1015,21 +1015,29 @@ function pageGuide(ctx, g) {
     const list = s.products.map((id) => map.get(id)).filter(Boolean);
     if (!list.length) return "";
     const day = s.heading.match(/^Day\s*(\d)/i);
-    return `<section class="guide-section"${day ? ` id="day-${day[1]}"` : ""}><h2>${esc(s.heading)}</h2><p>${esc(s.text)}</p>${grid(list)}</section>`;
+    const text = (Array.isArray(s.text) ? s.text : [s.text]).map((t) => `<p>${esc(t)}</p>`).join("");
+    return `<section class="guide-section"${day ? ` id="day-${day[1]}"` : ""}><h2>${esc(s.heading)}</h2>${text}${grid(list)}</section>`;
   }).join("\n");
   const all = g.sections.flatMap((s) => s.products).map((id) => map.get(id)).filter(Boolean);
   const ld = { "@context": "https://schema.org", "@type": "Article", headline: g.title, description: g.description, url: `${SITE}/guides/${g.slug}.html`,
     image: all[0]?.image ? [all[0].image] : undefined, publisher: { "@type": "Organization", name: "7 Day Gifts", logo: { "@type": "ImageObject", url: SITE + "/logo.png" } }, author: { "@type": "Organization", name: "7 Day Gifts" } };
   const others = ctx.guides.filter((o) => o.slug !== g.slug).map((o) => `<a class="chip" href="/guides/${o.slug}.html">${esc(shortGuide(o.title))}</a>`).join("");
-  return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, jsonld: [ld, bc.ld] }) + header("Gift Guides", ctx) + `
+  // Optional extras for search landing pages: a FAQ (also as FAQPage data) and "see also" links out to existing pages.
+  const faq = (g.faq || []).filter((f) => f.q && f.a);
+  const faqHtml = faq.length ? `<section class="guide-section guide-faq"><h2>${esc(g.faqHeading || "Questions people ask")}</h2>${faq.map((f) => `<div class="faq-item"><h3>${esc(f.q)}</h3><p>${esc(f.a)}</p></div>`).join("")}</section>` : "";
+  const faqLd = faq.length ? { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) } : null;
+  const seeAlso = (g.seeAlso || []).map(([href, label]) => `<a class="chip" href="${esc(href)}">${esc(label)}</a>`).join("");
+  return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, keywords: g.keywords || "", jsonld: [ld, ...(faqLd ? [faqLd] : []), bc.ld] }) + header("Gift Guides", ctx) + `
       <section class="section guide">
         ${bc.html}
         <p class="eyebrow">Gift guide</p>
         <h1 class="guide-title">${esc(g.title)}</h1>
         <div class="guide-intro">${g.intro.map((t) => `<p>${esc(t)}</p>`).join("")}</div>
         ${sections}
-        ${g.tips?.length ? `<section class="guide-section callout"><h2>Tips</h2><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>` : ""}
+        ${g.tips?.length ? `<section class="guide-section callout"><h2>${esc(g.tipsHeading || "Tips")}</h2><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>` : ""}
+        ${faqHtml}
         <p class="guide-more">Want to see everything? <a href="/gift-gallery.html">Browse all ${ctx.mainGifts.length} gifts</a>, try the <a href="/gift-finder.html">3-tap gift finder</a>, or shop <a href="/for/her.html">gifts for her</a> and <a href="/for/him.html">gifts for him</a>.</p>
+        ${seeAlso ? `<div class="more-block"><h2 class="more-title">See also</h2><div class="chip-row">${seeAlso}</div></div>` : ""}
         <div class="more-block"><h2 class="more-title">More gift guides</h2><div class="chip-row">${others}</div></div>
       </section>` + footer(ctx);
 }
@@ -1110,7 +1118,9 @@ async function main() {
   const season = chanukahSeason();
   const mainGifts = products.filter((p) => !p.side); // anniversary cards & wrapping paper have their own sections
   // A guide marked "hidden" in data/guides.json is still built (direct link only) but linked nowhere, noindex, not in the sitemap.
-  const publicGuides = guides.filter((g) => !g.hidden);
+  // A guide marked "unlisted" is a search landing page: indexable and in the sitemap (findable on Google),
+  // but linked from nowhere on the site (not the menu, footer, home page, guides index, gift pages or other guides).
+  const publicGuides = guides.filter((g) => !g.hidden && !g.unlisted);
   const ctx = { products, mainGifts, categories, guides: publicGuides, catIntros, season: { ...season, on: false } };
 
   // generated folders are rebuilt from scratch so removed products disappear
