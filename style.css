@@ -565,3 +565,15 @@ html.menu-locked,html.menu-locked body{overflow:hidden}
 .guide-faq .faq-item:first-of-type{border-top:0;padding-top:6px}
 .guide-faq h3{font-family:var(--sans);font-size:17px;font-weight:600;color:var(--primary);margin:0 0 6px}
 .guide-faq p{margin:0;color:#45526A}
+
+/* ---------- Budget Plan Jump Bar & Night Badges ---------- */
+.plan-jump{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:24px 0 36px}
+.plan-jump-card{display:flex;flex-direction:column;gap:4px;padding:16px 18px;border-radius:var(--radius-sm);background:var(--card);border:1.5px solid var(--border-soft);text-decoration:none;box-shadow:var(--shadow-soft);transition:transform .15s,border-color .2s,box-shadow .2s}
+.plan-jump-card:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:var(--shadow)}
+.plan-jump-kicker{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-text)}
+.plan-jump-title{font-family:var(--serif);font-size:21px;font-weight:600;color:var(--primary);line-height:1.2}
+.plan-jump-band{font-size:14px;font-weight:600;color:var(--primary);margin-top:2px}
+.plan-jump-note{font-size:13px;color:var(--muted);line-height:1.4;margin-top:2px}
+.plan-section-badge{display:inline-block;margin:0 0 8px;padding:4px 12px;border-radius:999px;background:#EEF2F8;color:var(--primary);border:1px solid #D5DEEC;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.night-badge{position:absolute;top:10px;left:10px;z-index:2;padding:4px 10px;border-radius:999px;background:var(--primary);color:#fff;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;box-shadow:0 2px 8px rgba(31,51,88,.18);pointer-events:none}
+@media (max-width:680px){.plan-jump{grid-template-columns:1fr;gap:10px;margin:18px 0 28px}.plan-jump-card{padding:14px 16px}}

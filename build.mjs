@@ -413,7 +413,7 @@ ${keywords ? `  <meta name="twitter:description" content="${esc(description)}" /
   <meta name="theme-color" content="#ffffff" />${jsonld.map((j) => `\n  <script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("")}${ga}
 </head>`;
 }
-const ASSET_V = "18";
+const ASSET_V = "19";
 
 function chanukahBand(ctx) {
   return ""; // Chanukah is not promoted on the site (Avrohom, Nov 4); the pages stay reachable by direct link
@@ -501,11 +501,12 @@ function guideCard(ctx, g) {
   return `<a class="guide-card" href="/guides/${g.slug}.html">${strip}<span class="guide-card-title">${esc(g.title)}</span><span class="guide-card-text">${esc(g.description)}</span><span class="guide-card-link">Read the guide${ICON.arrow}</span></a>`;
 }
 
-function card(p, { headingTag = "h3", eager = false } = {}) {
+function card(p, { headingTag = "h3", eager = false, badge = "" } = {}) {
   const img = p.image
     ? `<img class="product-image" src="${esc(p.thumb || p.image)}" alt="${esc(p.name)}" ${eager ? "" : 'loading="lazy" '}decoding="async" width="400" height="400" onerror="this.style.display='none';this.parentElement.classList.add('image-missing');" />`
     : "";
   return `<article class="product-card" data-id="${esc(p.id)}" data-gender="${p.gender}" data-category="${esc(p.category)}" data-pop="${p.popularity}" data-order="${p.order}" data-band="${p.bandKey}" data-side="${p.side ? 1 : 0}" data-shop="${p.shop ? 1 : 0}">
+  ${badge ? `<span class="night-badge">${esc(badge)}</span>` : ""}
   <button type="button" class="heart" data-id="${esc(p.id)}" aria-label="Save ${esc(p.name)} to your wish list">${ICON.heart}</button>
   <a class="product-link" href="/gifts/${p.slug}.html">
     <div class="product-image-wrap${p.image ? "" : " image-missing"}">${img}<div class="image-fallback">Image coming soon</div></div>
@@ -520,7 +521,7 @@ function card(p, { headingTag = "h3", eager = false } = {}) {
   </div>
 </article>`;
 }
-const grid = (list, id = "") => `<div class="product-grid"${id ? ` id="${id}"` : ""}>\n${list.map((p) => card(p)).join("\n")}\n</div>`;
+const grid = (list, id = "", opts = {}) => `<div class="product-grid"${id ? ` id="${id}"` : ""}>\n${list.map((p, idx) => card(p, { badge: opts.numberedLabel ? `${opts.numberedLabel} ${idx + 1}` : "" })).join("\n")}\n</div>`;
 const row = (list, id = "") => `<div class="scroller" data-scroller><button type="button" class="scroll-btn prev" aria-label="Scroll back">‹</button><div class="product-row"${id ? ` id="${id}"` : ""}>\n${list.map((p) => card(p)).join("\n")}\n</div><button type="button" class="scroll-btn next" aria-label="Scroll forward">›</button></div>`;
 const isCWName = (n) => /card|wrap/i.test(n);
 const byPop = (a, b) => b.popularity - a.popularity || a.order - b.order;
@@ -1011,12 +1012,15 @@ function chanukahPages(ctx) {
 function pageGuide(ctx, g) {
   const map = new Map(ctx.products.map((p) => [p.id, p]));
   const bc = crumbs([["/index.html", "Home"], ["/guides/", "Gift Guides"], [`/guides/${g.slug}.html`, shortGuide(g.title)]]);
+  const jumpHtml = (g.jumpCards || []).length ? `<nav class="plan-jump" aria-label="Jump to a budget plan">${g.jumpCards.map((j) => `<a class="plan-jump-card" href="#${esc(j.id)}"><span class="plan-jump-kicker">${esc(j.kicker)}</span><span class="plan-jump-title">${esc(j.title)}</span><span class="plan-jump-band">${esc(j.band)}</span><span class="plan-jump-note">${esc(j.note)}</span></a>`).join("")}</nav>` : "";
   const sections = g.sections.map((s) => {
     const list = s.products.map((id) => map.get(id)).filter(Boolean);
     if (!list.length) return "";
     const day = s.heading.match(/^Day\s*(\d)/i);
+    const secId = s.id || (day ? `day-${day[1]}` : "");
+    const badgeHtml = s.badge ? `<span class="plan-section-badge">${esc(s.badge)}</span>` : "";
     const text = (Array.isArray(s.text) ? s.text : [s.text]).map((t) => `<p>${esc(t)}</p>`).join("");
-    return `<section class="guide-section"${day ? ` id="day-${day[1]}"` : ""}><h2>${esc(s.heading)}</h2>${text}${grid(list)}</section>`;
+    return `<section class="guide-section"${secId ? ` id="${esc(secId)}"` : ""}>${badgeHtml}<h2>${esc(s.heading)}</h2>${text}${grid(list, "", { numberedLabel: s.numberedLabel || "" })}</section>`;
   }).join("\n");
   const all = g.sections.flatMap((s) => s.products).map((id) => map.get(id)).filter(Boolean);
   const ld = { "@context": "https://schema.org", "@type": "Article", headline: g.title, description: g.description, url: `${SITE}/guides/${g.slug}.html`,
@@ -1030,9 +1034,10 @@ function pageGuide(ctx, g) {
   return head({ ctx, title: `${g.metaTitle || g.title} | 7 Day Gifts`, description: g.description, canonical: `${SITE}/guides/${g.slug}.html`, type: "article", noindex: !!g.hidden, keywords: g.keywords || "", jsonld: [ld, ...(faqLd ? [faqLd] : []), bc.ld] }) + header("Gift Guides", ctx) + `
       <section class="section guide">
         ${bc.html}
-        <p class="eyebrow">Gift guide</p>
+        <p class="eyebrow">${esc(g.eyebrow || "Gift guide")}</p>
         <h1 class="guide-title">${esc(g.title)}</h1>
         <div class="guide-intro">${g.intro.map((t) => `<p>${esc(t)}</p>`).join("")}</div>
+        ${jumpHtml}
         ${sections}
         ${g.tips?.length ? `<section class="guide-section callout"><h2>${esc(g.tipsHeading || "Tips")}</h2><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>` : ""}
         ${faqHtml}
